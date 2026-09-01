@@ -1,0 +1,5 @@
+.DS_Store
+.env
+js/env.local.mjs
+
+.cursor/

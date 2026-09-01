@@ -1,0 +1,38 @@
+.install {
+  max-width: 28rem;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.product-image {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  border: var(--line) solid var(--color-line);
+  background: var(--color-surface);
+}
+
+.product-image[hidden] {
+  display: none;
+}
+
+.product-ens {
+  font-family: var(--font-mono);
+  font-size: var(--text-sm);
+  color: var(--color-mute);
+  word-break: break-all;
+}
+
+.install-state {
+  min-height: 1.5em;
+  font-size: var(--text-sm);
+  color: var(--color-mute);
+}
+
+.install-actions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}

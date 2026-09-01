@@ -1,0 +1,47 @@
+:root {
+  --palette-ink: #0a0a09;
+  --palette-paper: #f3f1eb;
+  --palette-white: #fcfcfa;
+  --palette-muted-light: #696864;
+  --palette-danger: #b42318;
+
+  --color-paper: var(--palette-paper);
+  --color-ink: var(--palette-ink);
+  --color-ink-soft: #2a2924;
+  --color-mute: var(--palette-muted-light);
+  --color-line: rgba(10, 10, 9, 0.14);
+  --color-surface: var(--palette-white);
+  --color-danger: var(--palette-danger);
+  --color-hot: #8a3b12;
+  --color-progress: #2a4a3a;
+
+  --font-display: 'Newsreader', 'Times New Roman', serif;
+  --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
+  --font-mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --text-xs: 0.6875rem;
+  --text-sm: 0.8125rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: clamp(1.4rem, 4vw, 2rem);
+  --text-hero: clamp(2rem, 7vw, 3.25rem);
+
+  --leading-tight: 0.92;
+  --leading-snug: 1.2;
+  --leading-body: 1.55;
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+
+  --line: 1px;
+  --radius: 0;
+  --touch: 2.75rem;
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-ui: 180ms;
+  --z-overlay: 40;
+}
