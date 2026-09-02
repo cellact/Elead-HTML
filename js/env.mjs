@@ -1,7 +1,16 @@
 import { requireFiniteNumber, requireNonEmptyString } from './assert.mjs'
 import { envValues } from './env.values.mjs'
 
+function isLocalHost() {
+  const host = window.location.hostname
+  return host === 'localhost' || host === '127.0.0.1' || host === '[::1]'
+}
+
 async function loadLocalOverrides() {
+  if (!isLocalHost()) {
+    return {}
+  }
+
   try {
     const module = await import('./env.local.mjs')
     if (module.envLocal == null || typeof module.envLocal !== 'object') {
@@ -21,7 +30,7 @@ function isMissingModule(error) {
     return false
   }
 
-  return /Failed to fetch dynamically imported module|error loading dynamically imported module|404|env\.local/i.test(
+  return /Failed to fetch dynamically imported module|error loading dynamically imported module|Importing a module script failed|404|env\.local/i.test(
     error.message,
   )
 }

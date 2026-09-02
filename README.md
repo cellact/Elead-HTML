@@ -79,7 +79,7 @@ Both URLs live in `js/env.values.mjs`. Install throws if either is empty.
 
 Public values live in `js/env.values.mjs`. The HTML does not load `.env` files.
 
-Optional machine override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored).
+Optional localhost override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored). GitHub Pages and the native WebView only read `env.values.mjs`.
 
 `js/env.mjs` throws if a required value is empty. No secrets in this repo.
 
