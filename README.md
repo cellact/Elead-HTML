@@ -62,7 +62,7 @@ Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`
 
 ## Install
 
-The studio QR is an `arnacon://install?url=…` link. Native opens `install.html?secret=…&label=…` and appends `web3identity`. Tap **Activate**: GET `groupMembersUrl` (on-chain Semaphore commitments + scope), build a proof in the page, then POST `{ proof, label, web3identity }` to `activateUrl`. The secret stays in the URL; it is not sent in the POST.
+The studio QR is an `arnacon://install?url=…` link. Native opens `install.html?secret=…&label=…&domain=…` and appends `web3identity`. `label` is the short allotted name (no `lead-` / `inbox-`, no TLD). `domain` is the studio 2LD (e.g. `ronstudio`). Tap **Activate**: GET `groupMembersUrl?label=…&domain=…`, build a proof from `secret` + `label`, then POST `{ proof, label, domain, web3identity }` to `activateUrl`. The secret stays in the URL; it is not sent in the POST.
 
 Both URLs live in `js/env.values.mjs`. Install throws if either is empty.
 
@@ -92,7 +92,7 @@ python3 -m http.server 4174
 - [SP mainscreen](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=inbox-preview.elead.eth)
 - [End-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=lead-1a2b3c4d.elead.eth&remoteId=inbox-preview.elead.eth)
 - [Empty end-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-new.elead.eth&remoteId=inbox-preview.elead.eth)
-- [Install](http://127.0.0.1:4174/install.html?secret=0x0000000000000000000000000000000000000000000000000000000000000001&label=lead-preview.elead.eth&web3identity=preview.arnacon.global)
+- [Install](http://127.0.0.1:4174/install.html?secret=0x0000000000000000000000000000000000000000000000000000000000000001&label=lpreview1&domain=ronstudio&web3identity=preview.arnacon.global)
 - [SP chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=inbox-preview.elead.eth&sessionId=11)
 - [Incoming](http://127.0.0.1:4174/index.html?preview=1#screen=INCOMING&localId=0xpreview&from=inbox-preview.elead.eth)
 - [Ringing](http://127.0.0.1:4174/index.html?preview=1#screen=RING&localId=0xpreview&to=inbox-preview.elead.eth)

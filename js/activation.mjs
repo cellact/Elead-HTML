@@ -65,6 +65,21 @@ function requireBytes32(value, message) {
   return hex
 }
 
+function requireEnsLabel(value, message) {
+  const label = requireNonEmptyString(value, message).toLowerCase()
+  if (!ENS_LABEL_RE.test(label)) {
+    throw new Error(message)
+  }
+  return label
+}
+
+function withClaimQuery(groupMembersUrl, { label, domain }) {
+  const url = new URL(groupMembersUrl)
+  url.searchParams.set('label', label)
+  url.searchParams.set('domain', domain)
+  return url.toString()
+}
+
 export function readInstallClaim(location = window.location) {
   const query = readSearch(location.search)
   const hash = readSearch(location.hash)
@@ -73,13 +88,17 @@ export function readInstallClaim(location = window.location) {
     pickParam(query, hash, 'secret'),
     'secret is missing or not a 32-byte hex value. The studio QR must include secret.',
   )
-  const label = requireNonEmptyString(
+  const label = requireEnsLabel(
     pickParam(query, hash, 'label'),
-    'label is missing. The studio QR must include the on-chain label.',
+    'label is missing or not a single ENS label. The studio QR must include label (no lead-/inbox- prefix, no domain).',
+  )
+  const domain = requireEnsLabel(
+    pickParam(query, hash, 'domain'),
+    'domain is missing or not a single ENS label. The studio QR must include domain (the 2LD, e.g. ronstudio).',
   )
   const web3identity = canonicalWeb3Identity(pickParam(query, hash, 'web3identity'))
 
-  return Object.freeze({ secret, label, web3identity })
+  return Object.freeze({ secret, label, domain, web3identity })
 }
 
 async function readJson(res) {
@@ -105,11 +124,15 @@ function throwHttpError(res, data, fallback) {
   throw new Error(`${detail} (${res.status})`)
 }
 
-export async function getGroupMembers(groupMembersUrl) {
-  const url = requireNonEmptyString(
+export async function getGroupMembers(groupMembersUrl, { label, domain }) {
+  const baseUrl = requireNonEmptyString(
     groupMembersUrl,
     'Missing ELEAD_GROUP_MEMBERS_URL. Set it in js/env.values.mjs or js/env.local.mjs.',
   )
+  const url = withClaimQuery(baseUrl, {
+    label: requireEnsLabel(label, 'group-members: label is missing'),
+    domain: requireEnsLabel(domain, 'group-members: domain is missing'),
+  })
 
   const res = await fetch(url, { method: 'GET', headers: { Accept: 'application/json' } })
   const data = await readJson(res)
@@ -139,7 +162,7 @@ export async function getGroupMembers(groupMembersUrl) {
   }
 }
 
-export async function activateWithProof(activateUrl, { proof, label, web3identity }) {
+export async function activateWithProof(activateUrl, { proof, label, domain, web3identity }) {
   const url = requireNonEmptyString(
     activateUrl,
     'Missing ELEAD_ACTIVATE_URL. Set it in js/env.values.mjs or js/env.local.mjs.',
@@ -153,7 +176,7 @@ export async function activateWithProof(activateUrl, { proof, label, web3identit
     res = await fetch(url, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ proof, label, web3identity }),
+      body: JSON.stringify({ proof, label, domain, web3identity }),
       signal: controller.signal,
     })
   } catch (error) {
@@ -181,13 +204,17 @@ export async function activateWithProof(activateUrl, { proof, label, web3identit
 export async function activateLine({
   secret,
   label,
+  domain,
   web3identity,
   groupMembersUrl,
   activateUrl,
   onStatus,
 }) {
   onStatus?.('Fetching the claim group…')
-  const { commitments, scope, merkleTreeRoot } = await getGroupMembers(groupMembersUrl)
+  const { commitments, scope, merkleTreeRoot } = await getGroupMembers(groupMembersUrl, {
+    label,
+    domain,
+  })
 
   onStatus?.('Building the proof…')
   const proof = await generateActivationProof({
@@ -199,5 +226,5 @@ export async function activateLine({
   })
 
   onStatus?.('Sending the proof…')
-  return activateWithProof(activateUrl, { proof, label, web3identity })
+  return activateWithProof(activateUrl, { proof, label, domain, web3identity })
 }

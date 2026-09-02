@@ -15,7 +15,7 @@ export async function startInstallScreen() {
   const stateNode = requireElement('install-state')
 
   setText(labelNode, env.productLabel)
-  setText(ensNode, claim.label)
+  setText(ensNode, `${claim.label}.${claim.domain}`)
   setText(bodyNode, env.productDescription)
 
   if (env.productImage) {
@@ -33,6 +33,7 @@ export async function startInstallScreen() {
     activateLine({
       secret: claim.secret,
       label: claim.label,
+      domain: claim.domain,
       web3identity: claim.web3identity,
       groupMembersUrl: env.groupMembersUrl,
       activateUrl: env.activateUrl,
