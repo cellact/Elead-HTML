@@ -10,6 +10,6 @@ export const envValues = {
   packageType: 'ENS',
   sessionRange: 50,
   messageRange: 40,
-  groupMembersUrl: '',
+  groupMembersUrl: 'https://elead-backend-309305771885.us-central1.run.app/group-members',
   activateUrl: 'https://elead-backend-309305771885.us-central1.run.app',
 }

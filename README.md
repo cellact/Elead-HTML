@@ -31,15 +31,20 @@ Call pages are the same for both roles.
 
 ## Native routing
 
+Arnacon always opens `index.html` with a hash. `js/boot.mjs` attaches `window.top.controller`, then the outer iframe loads `app.html`. `app.html` loads the real page in an inner iframe.
+
+SP is `localId` starting with `inbox-`. Anything else on MAIN (usually `lead-…`) is rewritten to CHAT before `app.html` loads. `remoteId` is not invented: native must already pass the provider inbox.
+
 ```
 index.html#screen=MAIN&localId=inbox-…
-  → js/boot.mjs attaches the controller
-  → iframe loads app.html?screen=MAIN&…
-  → app.html loads mainscreen.html
+  → boot attaches window.top.controller
+  → outer iframe: app.html?screen=MAIN&localId=…
+  → inner iframe: mainscreen.html
 
-index.html#screen=MAIN&localId=lead-…
-  → rewritten to #screen=CHAT&remoteId=… (native must pass the provider inbox)
-  → app.html loads chat.html
+index.html#screen=MAIN&localId=lead-…&remoteId=inbox-…
+  → boot rewrites hash to #screen=CHAT&localId=lead-…&remoteId=inbox-…
+  → outer iframe: app.html?screen=CHAT&…
+  → inner iframe: chat.html
 ```
 
 | Hash | Page |
@@ -57,9 +62,9 @@ Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`
 
 ## Install
 
-The studio QR is an `arnacon://install?url=…` link. Native opens `install.html?secret=…&label=…` and appends `web3identity`. Tap **Activate**: the page builds a Semaphore proof from the secret and `POST`s `{ proof, label, web3identity }` to `ELEAD_ACTIVATE_URL`.
+The studio QR is an `arnacon://install?url=…` link. Native opens `install.html?secret=…&label=…` and appends `web3identity`. Tap **Activate**: GET `groupMembersUrl` (on-chain Semaphore commitments + scope), build a proof in the page, then POST `{ proof, label, web3identity }` to `activateUrl`. The secret stays in the URL; it is not sent in the POST.
 
-Set `ELEAD_GROUP_MEMBERS_URL` and `ELEAD_ACTIVATE_URL` when those functions are deployed. The secret stays in the URL; it is not sent in the POST.
+Both URLs live in `js/env.values.mjs`. Install throws if either is empty.
 
 ## What is where
 
@@ -72,9 +77,9 @@ Set `ELEAD_GROUP_MEMBERS_URL` and `ELEAD_ACTIVATE_URL` when those functions are 
 
 ## Config
 
-1. Read `.env.example`.
-2. Put public values in `js/env.values.mjs`.
-3. Optional override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored).
+Public values live in `js/env.values.mjs`. The HTML does not load `.env` files.
+
+Optional machine override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored).
 
 `js/env.mjs` throws if a required value is empty. No secrets in this repo.
 
