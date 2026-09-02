@@ -81,8 +81,6 @@ Other Arnacon products install in **native** before HTML opens. `install.html` i
 python3 -m http.server 4174
 ```
 
-Hard-refresh if an old tab still asks for `dashboard.html`.
-
 - [SP mainscreen](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=inbox-preview.elead.eth)
 - [End-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=lead-1a2b3c4d.elead.eth)
 - [Empty end-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-new.elead.eth)
