@@ -50,7 +50,6 @@ export async function loadEnv() {
   const merged = { ...envValues, ...(await loadLocalOverrides()) }
 
   return Object.freeze({
-    productEnsName: requiredString(merged, 'productEnsName', 'ELEAD_PRODUCT_ENS'),
     productLabel: requiredString(merged, 'productLabel', 'ELEAD_PRODUCT_LABEL'),
     productDescription: requiredString(
       merged,
@@ -60,7 +59,6 @@ export async function loadEnv() {
     productImage:
       typeof merged.productImage === 'string' ? merged.productImage.trim() : '',
     packageType: requiredString(merged, 'packageType', 'ELEAD_PACKAGE_TYPE'),
-    inboxEns: requiredString(merged, 'inboxEns', 'ELEAD_INBOX_ENS'),
     sessionRange: requiredCount(merged, 'sessionRange', 'ELEAD_SESSION_RANGE'),
     messageRange: requiredCount(merged, 'messageRange', 'ELEAD_MESSAGE_RANGE'),
     groupMembersUrl:

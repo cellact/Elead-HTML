@@ -9,7 +9,7 @@ import {
   threadIdForChat,
   writeChatStatus,
 } from '../chat-status.mjs'
-import { readRoute } from '../route.mjs'
+import { readRoute, requireRemoteId } from '../route.mjs'
 import { isServiceProvider } from '../role.mjs'
 
 function formatClock(time) {
@@ -88,7 +88,8 @@ export async function startChatScreen() {
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-  const remoteId = route.remoteId || env.inboxEns
+  const provider = isServiceProvider(localId)
+  const remoteId = provider ? route.remoteId : requireRemoteId(route)
   const sessionId = route.sessionId || (await findLineSession(controller, env))
   const threadId = threadIdForChat({ sessionId, remoteId })
 
@@ -99,14 +100,13 @@ export async function startChatScreen() {
   const emptyNode = requireElement('chat-empty')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
-  const provider = isServiceProvider(localId)
 
   if (provider) {
     setText(eyebrowNode, 'Lead')
     setText(titleNode, await leadTitle({ controller, env, route, sessionId }))
   } else {
     setText(eyebrowNode, 'Provider')
-    setText(titleNode, env.inboxEns)
+    setText(titleNode, remoteId)
   }
 
   paintStatus(statusNode, readChatStatus(threadId))

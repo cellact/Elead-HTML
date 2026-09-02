@@ -103,6 +103,25 @@ export function requireLocalId(route) {
   )
 }
 
+const previewInboxEns = 'inbox-preview.elead.eth'
+
+export function requireRemoteId(route) {
+  if (route.remoteId) {
+    return requireNonEmptyString(
+      route.remoteId,
+      'remoteId is empty. Native must pass the provider inbox ENS as #remoteId=...',
+    )
+  }
+
+  if (route.preview) {
+    return previewInboxEns
+  }
+
+  throw new Error(
+    'remoteId is missing. Native must open this product with #remoteId=... (the provider inbox ENS).',
+  )
+}
+
 export function screenFile(screen) {
   switch (screen) {
     case screenName.install:
@@ -152,6 +171,16 @@ export function buildAppSrc(route) {
   const params = writeParams(route)
   params.set('screen', route.screen)
   return `app.html?${params.toString()}`
+}
+
+export function syncLocationHash(route, location = window.location) {
+  const hash = writeParams(route).toString()
+  if (location.hash.replace(/^#/, '') === hash) {
+    return
+  }
+
+  const url = `${location.pathname}${location.search}#${hash}`
+  history.replaceState(null, '', url)
 }
 
 export function openScreen(screen, extra = {}) {
