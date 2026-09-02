@@ -11,5 +11,5 @@ export const envValues = {
   sessionRange: 50,
   messageRange: 40,
   groupMembersUrl: 'https://elead-backend-309305771885.us-central1.run.app/group-members',
-  activateUrl: 'https://elead-backend-309305771885.us-central1.run.app',
+  activateUrl: 'https://elead-backend-309305771885.us-central1.run.app/activate-with-proof',
 }
