@@ -12,4 +12,6 @@ export const envValues = {
   inboxEns: 'inbox.elead.eth',
   sessionRange: 50,
   messageRange: 40,
+  groupMembersUrl: '',
+  activateUrl: '',
 }

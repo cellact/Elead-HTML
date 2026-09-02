@@ -118,23 +118,6 @@ export class Controller {
     })
   }
 
-  /**
-   * Purchase the product through ENS. Native treats customer_id as the
-   * buyer and item as the product name (`new-item` → pending install).
-   */
-  purchaseProductWithEns({ item, customerId }) {
-    this._send({
-      action: 'new-item',
-      body: {
-        customer_id: requireNonEmptyString(customerId, 'purchaseProductWithEns: customerId'),
-        item: requireNonEmptyString(item, 'purchaseProductWithEns: item').toLowerCase(),
-      },
-    })
-  }
-
-  /**
-   * Full install payload when native already has url, uuid, and timestamp.
-   */
   acceptCall(callId) {
     this._send({
       action: 'accept-call',
@@ -174,19 +157,6 @@ export class Controller {
     this._send({
       action: 'set-hold',
       body: { localId: this.localId, callId, hold: held },
-    })
-  }
-
-  installProduct({ item, url, uuid, timestamp, packageType }) {
-    this._send({
-      action: 'install-product',
-      body: {
-        item: requireNonEmptyString(item, 'installProduct: item'),
-        url: requireNonEmptyString(url, 'installProduct: url'),
-        uuid: requireNonEmptyString(uuid, 'installProduct: uuid'),
-        timestamp: requireNonEmptyString(timestamp, 'installProduct: timestamp'),
-        packageType: requireNonEmptyString(packageType, 'installProduct: packageType'),
-      },
     })
   }
 

@@ -63,5 +63,8 @@ export async function loadEnv() {
     inboxEns: requiredString(merged, 'inboxEns', 'ELEAD_INBOX_ENS'),
     sessionRange: requiredCount(merged, 'sessionRange', 'ELEAD_SESSION_RANGE'),
     messageRange: requiredCount(merged, 'messageRange', 'ELEAD_MESSAGE_RANGE'),
+    groupMembersUrl:
+      typeof merged.groupMembersUrl === 'string' ? merged.groupMembersUrl.trim() : '',
+    activateUrl: typeof merged.activateUrl === 'string' ? merged.activateUrl.trim() : '',
   })
 }

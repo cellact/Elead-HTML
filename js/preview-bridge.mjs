@@ -94,16 +94,6 @@ export function createPreviewSend(getController) {
         return
       }
 
-      if (action === 'new-item' || action === 'install-product') {
-        controller.receiveData(
-          JSON.stringify({
-            action: 'product-install-started',
-            body: { item: body.item },
-          }),
-        )
-        return
-      }
-
       if (action === 'call-remote' || action === 'call-session') {
         controller.receiveData(
           JSON.stringify({

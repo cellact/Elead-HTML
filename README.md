@@ -15,7 +15,7 @@ voicecall.html      in-call (CALL)
 ringing.html        outbound (RING)
 incomingcall.html   inbound (INCOMING)
 errorwindow.html    native error overlay
-install.html        optional HTML purchase, then home
+install.html        QR claim page (proof → backend; no native install)
 ```
 
 There is no `newchat.html` or `recentsessions.html`. The session list lives in `mainscreen.html`.
@@ -48,15 +48,17 @@ index.html#screen=MAIN&localId=lead-…
 | `#screen=MAIN&localId=lead-….elead.eth` | Rewritten to chat |
 | `#screen=CHAT&sessionId=11` | One thread |
 | `#screen=CALL` / `RING` / `INCOMING` | Call UI |
-| `#screen=INSTALL` | Product card + Install |
+| `#screen=INSTALL` | Not used for QR claim. Native loads `install.html` directly. |
 
-If `screen` is omitted: `sessionId` / `remoteId` → chat; otherwise **MAIN**. Install is only shown when `screen=INSTALL`.
+If `screen` is omitted: `sessionId` / `remoteId` → chat; otherwise **MAIN**. QR activation does not use this hash router.
 
 Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`. `app.html` maps those to the call pages and back to home: MAIN for the SP, CHAT for the end user.
 
 ## Install
 
-Other Arnacon products install in **native** before HTML opens. `install.html` is optional: show product data, tap **Install**, send `new-item` (ENS purchase) or `install-product`. Then go home: an SP lands on the inbox; an end user lands in chat.
+The studio QR is an `arnacon://install?url=…` link. Native opens `install.html?secret=…&label=…` and appends `web3identity`. Tap **Activate**: the page builds a Semaphore proof from the secret and `POST`s `{ proof, label, web3identity }` to `ELEAD_ACTIVATE_URL`. There is no `new-item` / `install-product`.
+
+Set `ELEAD_GROUP_MEMBERS_URL` and `ELEAD_ACTIVATE_URL` when those functions are deployed. The secret stays in the URL; it is not sent in the POST.
 
 ## What is where
 
@@ -65,7 +67,7 @@ Other Arnacon products install in **native** before HTML opens. `install.html` i
 | **Elead-HTML** | This product UI |
 | **Elead** | Vite studio (allot identities, QR to activate a line) |
 | **Arnacon_HTML** | Pattern for `index` + `app` + screens |
-| Android / **arnacon-swift** | Bridge, `installProduct`, sessions, calls |
+| Android / **arnacon-swift** | Bridge, sessions, calls. Install deeplink opens `install.html`. |
 
 ## Config
 
@@ -84,10 +86,10 @@ python3 -m http.server 4174
 - [SP mainscreen](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=inbox-preview.elead.eth)
 - [End-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=lead-1a2b3c4d.elead.eth)
 - [Empty end-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-new.elead.eth)
-- [Install](http://127.0.0.1:4174/index.html?preview=1#screen=INSTALL&localId=0xpreview)
+- [Install](http://127.0.0.1:4174/install.html?secret=0x0000000000000000000000000000000000000000000000000000000000000001&label=lead-preview.elead.eth&web3identity=preview.arnacon.global)
 - [Chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-1a2b3c4d.elead.eth&sessionId=11)
 - [Incoming](http://127.0.0.1:4174/index.html?preview=1#screen=INCOMING&localId=0xpreview&from=inbox.elead.eth)
 - [Ringing](http://127.0.0.1:4174/index.html?preview=1#screen=RING&localId=0xpreview&to=inbox.elead.eth)
 - [In call](http://127.0.0.1:4174/index.html?preview=1#screen=CALL&localId=0xpreview&to=inbox.elead.eth)
 
-`preview=1` is required in a browser. Without it, a missing native bridge is a hard error.
+`preview=1` is required in a browser for product screens. Without it, a missing native bridge is a hard error. `install.html` is standalone and does not need `preview=1`.

@@ -5,4 +5,6 @@
 export const envLocal = {
   productEnsName: 'example.elead.eth',
   inboxEns: 'inbox.elead.eth',
+  groupMembersUrl: '',
+  activateUrl: '',
 }
