@@ -30,6 +30,10 @@ img {
   max-width: 100%;
 }
 
+[hidden] {
+  display: none !important;
+}
+
 button,
 input,
 textarea,

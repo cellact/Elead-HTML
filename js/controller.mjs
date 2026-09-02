@@ -135,6 +135,48 @@ export class Controller {
   /**
    * Full install payload when native already has url, uuid, and timestamp.
    */
+  acceptCall(callId) {
+    this._send({
+      action: 'accept-call',
+      body: { localId: this.localId, callId },
+    })
+  }
+
+  rejectCall(callId) {
+    this._send({
+      action: 'reject-call',
+      body: { localId: this.localId, callId },
+    })
+  }
+
+  callRemote(remoteId) {
+    this._send({
+      action: 'call-remote',
+      body: { localId: this.localId, remoteId },
+    })
+  }
+
+  callSession(sessionId) {
+    this._send({
+      action: 'call-session',
+      body: { localId: this.localId, sessionId },
+    })
+  }
+
+  setMute(callId, muted) {
+    this._send({
+      action: 'set-mute',
+      body: { localId: this.localId, callId, mute: muted },
+    })
+  }
+
+  setHold(callId, held) {
+    this._send({
+      action: 'set-hold',
+      body: { localId: this.localId, callId, hold: held },
+    })
+  }
+
   installProduct({ item, url, uuid, timestamp, packageType }) {
     this._send({
       action: 'install-product',

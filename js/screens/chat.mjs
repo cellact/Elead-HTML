@@ -10,6 +10,7 @@ import {
   writeChatStatus,
 } from '../chat-status.mjs'
 import { readRoute } from '../route.mjs'
+import { isServiceProvider } from '../role.mjs'
 
 function formatClock(time) {
   const date = new Date(time)
@@ -42,32 +43,79 @@ function paintStatus(node, status) {
   setText(node, labelForChatStatus(status))
 }
 
+function paintThread(listNode, emptyNode, messages, localId) {
+  const empty = messages.length === 0
+  emptyNode.hidden = !empty
+  listNode.hidden = empty
+
+  if (empty) {
+    replaceChildren(listNode)
+    return
+  }
+
+  replaceChildren(
+    listNode,
+    ...messages.map((message) => renderMessage(message, localId)),
+  )
+}
+
+async function findLineSession(controller, env) {
+  const { sessions } = await controller.getRecentSessions(env.sessionRange)
+  const line = sessions.find((session) => !session.isGroup)
+  return line ? String(line.sessionId) : null
+}
+
+async function leadTitle({ controller, env, route, sessionId }) {
+  if (route.sessionName) {
+    return route.sessionName
+  }
+
+  if (!sessionId) {
+    return route.remoteId || 'Lead'
+  }
+
+  const { sessions } = await controller.getRecentSessions(env.sessionRange)
+  const match = sessions.find((session) => String(session.sessionId) === String(sessionId))
+  if (match?.sessionName) {
+    return match.sessionName
+  }
+
+  return `Session ${sessionId}`
+}
+
 export async function startChatScreen() {
   const env = await loadEnv()
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
   const remoteId = route.remoteId || env.inboxEns
-  const sessionId = route.sessionId
+  const sessionId = route.sessionId || (await findLineSession(controller, env))
   const threadId = threadIdForChat({ sessionId, remoteId })
 
   const titleNode = requireElement('chat-title')
+  const eyebrowNode = requireElement('chat-eyebrow')
   const statusNode = requireElement('chat-status')
   const listNode = requireElement('message-list')
+  const emptyNode = requireElement('chat-empty')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
+  const provider = isServiceProvider(localId)
 
-  setText(titleNode, sessionId ? `Lead ${sessionId}` : remoteId)
+  if (provider) {
+    setText(eyebrowNode, 'Lead')
+    setText(titleNode, await leadTitle({ controller, env, route, sessionId }))
+  } else {
+    setText(eyebrowNode, 'Provider')
+    setText(titleNode, env.inboxEns)
+  }
+
   paintStatus(statusNode, readChatStatus(threadId))
 
   const { messages } = sessionId
     ? await controller.getMessages(sessionId, env.messageRange, null, true)
     : await controller.getMessages(remoteId, env.messageRange, null, false)
 
-  replaceChildren(
-    listNode,
-    ...messages.map((message) => renderMessage(message, localId)),
-  )
+  paintThread(listNode, emptyNode, messages, localId)
   listNode.scrollTop = listNode.scrollHeight
 
   if (sessionId) {
@@ -83,6 +131,8 @@ export async function startChatScreen() {
       return
     }
 
+    emptyNode.hidden = true
+    listNode.hidden = false
     listNode.append(renderMessage(message, localId))
     listNode.scrollTop = listNode.scrollHeight
   })
@@ -104,13 +154,23 @@ export async function startChatScreen() {
     input.value = ''
   })
 
+  requireElement('call-chat').addEventListener('click', () => {
+    if (sessionId) {
+      controller.callSession(sessionId)
+      return
+    }
+    controller.callRemote(remoteId)
+  })
+
   const approve = requireElement('approve-chat')
-  if (approve) {
-    approve.hidden = !localId.startsWith('inbox-')
+  if (provider) {
+    approve.hidden = false
     approve.addEventListener('click', () => {
       writeChatStatus(threadId, chatStatus.approved)
       paintStatus(statusNode, chatStatus.approved)
     })
+  } else {
+    approve.remove()
   }
 }
 

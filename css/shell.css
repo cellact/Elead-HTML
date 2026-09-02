@@ -9,3 +9,17 @@ body {
   height: 100%;
   border: 0;
 }
+
+#error-frame {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  z-index: var(--z-overlay);
+  background: transparent;
+}
+
+#error-frame[hidden] {
+  display: none;
+}

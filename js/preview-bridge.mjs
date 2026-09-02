@@ -2,6 +2,8 @@
  * In-browser stand-in for native. Only used when the URL has preview=1.
  */
 
+import { isServiceProvider } from './role.mjs'
+
 const previewSessions = [
   [
     'm-1',
@@ -77,13 +79,17 @@ export function createPreviewSend(getController) {
 
     window.setTimeout(() => {
       if (action === 'get-recent-sessions') {
-        respond(controller, body.requestId, { recentSessions: previewSessions })
+        const localId = body.localId
+        const rows = isServiceProvider(localId)
+          ? previewSessions
+          : previewSessions.filter((row) => row[2] === localId || row[5] === localId)
+        respond(controller, body.requestId, { recentSessions: rows })
         return
       }
 
       if (action === 'get-messages') {
         const sessionId = Number(body.sessionId)
-        const rows = previewMessages[sessionId] || []
+        const rows = Number.isFinite(sessionId) ? previewMessages[sessionId] || [] : []
         respond(controller, body.requestId, { messages: rows })
         return
       }
@@ -95,6 +101,31 @@ export function createPreviewSend(getController) {
             body: { item: body.item },
           }),
         )
+        return
+      }
+
+      if (action === 'call-remote' || action === 'call-session') {
+        controller.receiveData(
+          JSON.stringify({
+            action: 'ringing',
+            body: { to: body.remoteId || body.sessionId },
+          }),
+        )
+        return
+      }
+
+      if (action === 'accept-call') {
+        controller.receiveData(
+          JSON.stringify({
+            action: 'call-started',
+            body: { from: body.callId, sessionId: body.callId },
+          }),
+        )
+        return
+      }
+
+      if (action === 'reject-call') {
+        controller.receiveData(JSON.stringify({ action: 'call-ended', body: {} }))
         return
       }
 

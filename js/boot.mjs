@@ -1,7 +1,9 @@
 import { Controller, detectNativeSend } from './controller.mjs'
 import { createPreviewSend } from './preview-bridge.mjs'
 import { requireElement, setText } from './dom.mjs'
-import { buildScreenSrc, readRoute } from './route.mjs'
+import { loadEnv } from './env.mjs'
+import { isServiceProvider } from './role.mjs'
+import { buildAppSrc, openScreen, readRoute, screenName } from './route.mjs'
 
 function showFatal(error) {
   const banner = requireElement('fatal')
@@ -41,32 +43,30 @@ function attachController(route) {
 
   const controller = new Controller({ localId, send })
   window.top.controller = controller
-
-  controller.on('error', (body) => {
-    const detail = body?.e || body?.message || 'Native reported an error'
-    showFatal(new Error(String(detail)))
-  })
-
   return controller
 }
 
-function loadScreen(route) {
-  requireElement('screen-frame').src = buildScreenSrc(route)
-}
-
-function start() {
+async function start() {
   const route = readRoute()
-  attachController(route)
-  loadScreen(route)
+  const controller = attachController(route)
+
+  if (route.screen === screenName.main && !isServiceProvider(controller.localId)) {
+    const env = await loadEnv()
+    if (
+      openScreen(screenName.chat, {
+        remoteId: route.remoteId || env.inboxEns,
+      })
+    ) {
+      return
+    }
+  }
+
+  requireElement('screen-frame').src = buildAppSrc(route)
   hideFatal()
 }
 
 function boot() {
-  try {
-    start()
-  } catch (error) {
-    showFatal(error)
-  }
+  start().catch(showFatal)
 }
 
 boot()

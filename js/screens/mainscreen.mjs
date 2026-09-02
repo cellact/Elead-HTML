@@ -11,6 +11,7 @@ import {
 } from '../lead-status.mjs'
 import { labelForChatStatus, readChatStatus, threadIdForChat } from '../chat-status.mjs'
 import { openScreen, readRoute, screenName } from '../route.mjs'
+import { isServiceProvider } from '../role.mjs'
 
 function formatWhen(time) {
   const date = new Date(time)
@@ -64,7 +65,10 @@ function leadRow(session) {
         className: 'lead-open',
         type: 'button',
         onClick: () =>
-          openScreen(screenName.chat, { sessionId: session.sessionId }),
+          openScreen(screenName.chat, {
+            sessionId: session.sessionId,
+            sessionName: session.sessionName,
+          }),
       },
       el('p', { className: 'lead-name' }, session.sessionName || `Session ${session.sessionId}`),
       el('p', { className: 'lead-preview' }, session.lastMessageContent || 'No message yet'),
@@ -86,10 +90,16 @@ function matchesFilter(status, filter) {
   return status === filter
 }
 
-export async function startDashboardScreen() {
+export async function startMainScreen() {
   const env = await loadEnv()
   const route = readRoute()
   const controller = requireController()
+  const localId = route.localId || controller.localId
+
+  if (!isServiceProvider(localId)) {
+    throw new Error('mainscreen is the service-provider inbox. End users open chat.')
+  }
+
   const listNode = requireElement('lead-list')
   const emptyNode = requireElement('lead-empty')
   const filterNode = requireElement('status-filter')
@@ -119,7 +129,7 @@ export async function startDashboardScreen() {
   }
 
   if (!Object.values(leadStatus).includes(filterNode.value) && filterNode.value !== 'all') {
-    throw new Error(`Unknown dashboard filter: ${filterNode.value}`)
+    throw new Error(`Unknown mainscreen filter: ${filterNode.value}`)
   }
 
   async function loadLeads() {
@@ -135,10 +145,7 @@ export async function startDashboardScreen() {
     loadLeads().catch(failOnScreen)
   })
 
-  setText(
-    requireElement('inbox-id'),
-    route.localId || controller.localId,
-  )
+  setText(requireElement('inbox-id'), localId)
 }
 
-startDashboardScreen().catch(failOnScreen)
+startMainScreen().catch(failOnScreen)

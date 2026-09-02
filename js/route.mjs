@@ -3,19 +3,41 @@ import { requireNonEmptyString } from './assert.mjs'
 export const screenName = Object.freeze({
   install: 'INSTALL',
   chat: 'CHAT',
-  dashboard: 'MAIN',
+  main: 'MAIN',
+  call: 'CALL',
+  ring: 'RING',
+  incoming: 'INCOMING',
 })
 
 const screens = new Set(Object.values(screenName))
+
+const routeKeys = [
+  'localId',
+  'remoteId',
+  'sessionId',
+  'sessionName',
+  'item',
+  'label',
+  'description',
+  'image',
+  'packageType',
+  'url',
+  'uuid',
+  'timestamp',
+  'from',
+  'to',
+  'videoCall',
+]
 
 function readSearch(source) {
   if (!source) {
     return new URLSearchParams()
   }
 
-  const trimmed = source.charAt(0) === '#' || source.charAt(0) === '?'
-    ? source.slice(1)
-    : source
+  const trimmed =
+    source.charAt(0) === '#' || source.charAt(0) === '?'
+      ? source.slice(1)
+      : source
 
   return new URLSearchParams(trimmed)
 }
@@ -34,17 +56,13 @@ function pickParam(query, hash, name) {
   return null
 }
 
-function isPreviewRequested(query, hash) {
-  return pickParam(query, hash, 'preview') === '1'
-}
-
 function inferScreen(params) {
   const requested = params.screen
 
   if (requested) {
     const normalized = requested.toUpperCase()
     if (normalized === 'DASHBOARD') {
-      return screenName.dashboard
+      return screenName.main
     }
     if (!screens.has(normalized)) {
       throw new Error(`Unknown screen: ${requested}`)
@@ -56,11 +74,7 @@ function inferScreen(params) {
     return screenName.chat
   }
 
-  if (params.localId && params.localId.startsWith('inbox-')) {
-    return screenName.dashboard
-  }
-
-  return screenName.install
+  return screenName.main
 }
 
 export function readRoute(location = window.location) {
@@ -69,18 +83,11 @@ export function readRoute(location = window.location) {
 
   const params = {
     screen: pickParam(query, hash, 'screen'),
-    localId: pickParam(query, hash, 'localId'),
-    remoteId: pickParam(query, hash, 'remoteId'),
-    sessionId: pickParam(query, hash, 'sessionId'),
-    item: pickParam(query, hash, 'item'),
-    label: pickParam(query, hash, 'label'),
-    description: pickParam(query, hash, 'description'),
-    image: pickParam(query, hash, 'image'),
-    packageType: pickParam(query, hash, 'packageType'),
-    url: pickParam(query, hash, 'url'),
-    uuid: pickParam(query, hash, 'uuid'),
-    timestamp: pickParam(query, hash, 'timestamp'),
-    preview: isPreviewRequested(query, hash),
+    preview: pickParam(query, hash, 'preview') === '1',
+  }
+
+  for (const key of routeKeys) {
+    params[key] = pickParam(query, hash, key)
   }
 
   return Object.freeze({
@@ -102,51 +109,59 @@ export function screenFile(screen) {
       return 'install.html'
     case screenName.chat:
       return 'chat.html'
-    case screenName.dashboard:
-      return 'dashboard.html'
+    case screenName.main:
+      return 'mainscreen.html'
+    case screenName.call:
+      return 'voicecall.html'
+    case screenName.ring:
+      return 'ringing.html'
+    case screenName.incoming:
+      return 'incomingcall.html'
     default:
       throw new Error(`No HTML file for screen: ${screen}`)
   }
 }
 
-export function buildScreenSrc(route) {
-  const file = screenFile(route.screen)
+function writeParams(route, extra = {}) {
   const params = new URLSearchParams()
+  const merged = { ...route, ...extra }
 
-  if (route.preview) {
+  if (merged.preview) {
     params.set('preview', '1')
   }
 
-  for (const [key, value] of Object.entries(route)) {
-    if (key === 'screen' || key === 'preview' || value == null || value === '') {
+  for (const [key, value] of Object.entries(merged)) {
+    if (key === 'preview' || value == null || value === '' || value === false) {
       continue
     }
-    params.set(key, value)
+    params.set(key, String(value))
   }
 
+  return params
+}
+
+export function buildScreenSrc(route) {
+  const params = writeParams(route)
+  params.delete('screen')
   const query = params.toString()
+  const file = screenFile(route.screen)
   return query === '' ? file : `${file}?${query}`
+}
+
+export function buildAppSrc(route) {
+  const params = writeParams(route)
+  params.set('screen', route.screen)
+  return `app.html?${params.toString()}`
 }
 
 export function openScreen(screen, extra = {}) {
   const current = readRoute()
-  const next = new URLSearchParams()
-
-  next.set('screen', screen)
-  if (current.preview) {
-    next.set('preview', '1')
-  }
-  if (current.localId) {
-    next.set('localId', current.localId)
-  }
-
-  for (const [key, value] of Object.entries(extra)) {
-    if (value == null || value === '') {
-      continue
-    }
-    next.set(key, String(value))
-  }
-
+  const next = writeParams(current, { ...extra, screen })
   const target = window.top === window ? window : window.top
-  target.location.hash = next.toString()
+  const hash = next.toString()
+  if (target.location.hash.replace(/^#/, '') === hash) {
+    return false
+  }
+  target.location.hash = hash
+  return true
 }

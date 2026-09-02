@@ -3,7 +3,8 @@ import { failOnScreen } from '../screen-fail.mjs'
 import { loadEnv } from '../env.mjs'
 import { requireController } from '../controller.mjs'
 import { installProduct, readProductRecord } from '../product.mjs'
-import { openScreen, readRoute, requireLocalId, screenName } from '../route.mjs'
+import { openRoleHome } from '../role.mjs'
+import { readRoute, requireLocalId } from '../route.mjs'
 
 export async function startInstallScreen() {
   const env = await loadEnv()
@@ -46,7 +47,7 @@ export async function startInstallScreen() {
           ? 'Purchase started. Arnacon is buying this product for you.'
           : 'Install started. Arnacon is activating this product.',
       )
-      openScreen(screenName.chat, { remoteId: env.inboxEns })
+      openRoleHome(localId, { remoteId: env.inboxEns })
     } catch (error) {
       button.disabled = false
       throw error

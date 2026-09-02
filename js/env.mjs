@@ -17,11 +17,12 @@ async function loadLocalOverrides() {
 }
 
 function isMissingModule(error) {
-  return (
-    error instanceof TypeError &&
-    /Failed to fetch dynamically imported module|error loading dynamically imported module/i.test(
-      error.message,
-    )
+  if (!(error instanceof Error)) {
+    return false
+  }
+
+  return /Failed to fetch dynamically imported module|error loading dynamically imported module|404|env\.local/i.test(
+    error.message,
   )
 }
 

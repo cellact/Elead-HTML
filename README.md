@@ -1,127 +1,95 @@
 # Elead-HTML
 
-In-app HTML for the Elead product. Arnacon loads `index.html` as the product `clientUrl` after a user scans a QR or opens the product.
+In-app HTML for the Elead product. Arnacon loads `index.html` as the product `clientUrl`.
 
 This is not the Elead studio website. The studio lives in the sibling `Elead` repo.
 
-## Three journeys, three screens:
+## Product shape
 
-1. **Service provider inbox** — every lead, with status `new` / `in_progress` / `hot_lead` / `done`.
-2. **End-user chat** — one thread with the provider, plus chat status `pending` / `approved`.
-3. **Product install** — first screen after a product QR. Shows product data. **Install** tells the native app to purchase the product through ENS.
+```
+index.html          create window.top.controller
+app.html            route native screen → page
+mainscreen.html     SP inbox
+chat.html           one thread (end-user home)
+voicecall.html      in-call (CALL)
+ringing.html        outbound (RING)
+incomingcall.html   inbound (INCOMING)
+errorwindow.html    native error overlay
+install.html        optional HTML purchase, then home
+```
+
+There is no `newchat.html` or `recentsessions.html`. The session list lives in `mainscreen.html`.
+
+## Who sees what
+
+- **Service provider** (`localId` starts with `inbox-`): `mainscreen.html` lead list, statuses `new` / `in_progress` / `hot_lead` / `done`. Tap a lead to open chat.
+- **End user**: `chat.html` is home. Native `MAIN` for a lead identity is rewritten to chat. Empty threads say to write to start the conversation.
+
+`chat.html` is shared. The end user sees the provider ENS and chat status only — no **Approve**. The SP sees the lead and can approve. Both can place a call.
+
+Call pages are the same for both roles.
+
+## Native routing
+
+```
+index.html#screen=MAIN&localId=inbox-…
+  → js/boot.mjs attaches the controller
+  → iframe loads app.html?screen=MAIN&…
+  → app.html loads mainscreen.html
+
+index.html#screen=MAIN&localId=lead-…
+  → rewritten to #screen=CHAT
+  → app.html loads chat.html
+```
+
+| Hash | Page |
+| --- | --- |
+| `#screen=MAIN&localId=inbox-….elead.eth` | SP inbox |
+| `#screen=MAIN&localId=lead-….elead.eth` | Rewritten to chat |
+| `#screen=CHAT&sessionId=11` | One thread |
+| `#screen=CALL` / `RING` / `INCOMING` | Call UI |
+| `#screen=INSTALL` | Product card + Install |
+
+If `screen` is omitted: `sessionId` / `remoteId` → chat; otherwise **MAIN**. Install is only shown when `screen=INSTALL`.
+
+Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`. `app.html` maps those to the call pages and back to home: MAIN for the SP, CHAT for the end user.
+
+## Install
+
+Other Arnacon products install in **native** before HTML opens. `install.html` is optional: show product data, tap **Install**, send `new-item` (ENS purchase) or `install-product`. Then go home: an SP lands on the inbox; an end user lands in chat.
 
 ## What is where
 
-| Repo | Role | Use it for |
-| --- | --- | --- |
-| **Elead-HTML** (this repo) | Product UI inside the Arnacon WebView | Screens, native bridge, lead/chat status |
-| **Elead** | Vite + React studio | Allot identities, console, QR to *activate* a line |
-| **Arnacon_HTML** | Existing in-app HTML products | Controller boot, hash routes, `receiveData` |
-| **Arnacon_Android_Client_OpenSource** | Android host | `AndroidBridge.processAction`, `new-item`, `install-product` |
-| **arnacon-swift** | iOS host + SDK | `webkit` bridge, `installProduct`, ENS purchase |
-
-Elead studio (`/allotting`, `/contact`, console `/manage`) stays in **Elead**. Do not rebuild those pages here.
-
-Arnacon_HTML `chat.html` is a full messenger (calls, media, reactions). Elead chat is text and a status chip. Copy the *contract*, not that file.
-
-## How the native app talks to this HTML
-
-```
-QR / product open
-  → native WebView loads index.html#screen=…&localId=…
-  → js/boot.mjs creates window.top.controller
-  → iframe loads install.html, chat.html, or dashboard.html
-  → screen modules call controller methods
-  → native calls window.top.controller.receiveData(json)
-```
-
-Native sends and receives JSON `{ action, body }`. This repo implements the subset Elead needs:
-
-| Direction | Action | Used by |
-| --- | --- | --- |
-| HTML → native | `new-item` `{ customer_id, item }` | Install → ENS purchase |
-| HTML → native | `install-product` `{ item, url, uuid, timestamp, packageType }` | Install when the QR already has a full payload |
-| HTML → native | `get-recent-sessions` | SP dashboard |
-| HTML → native | `get-messages` | Chat |
-| HTML → native | `send-message` | Chat |
-| HTML → native | `update-session-timestamp` | Chat (mark read) |
-| Native → HTML | `data-retrieved` + `requestId` | Promise responses |
-| Native → HTML | `new-message` | Live chat / inbox refresh |
-| Native → HTML | `error` | Fatal banner |
-
-## What goes in which file
-
-```
-index.html                 boot + iframe + fatal banner
-install.html               product data + Install
-chat.html                  one thread + pending/approved
-dashboard.html             SP lead list + status filter
-
-js/boot.mjs                create Controller, route the iframe
-js/controller.mjs          native bridge (same receiveData contract)
-js/route.mjs               hash/query → INSTALL | CHAT | MAIN
-js/product.mjs             product record + which install action to send
-js/lead-status.mjs         SP statuses (local until a backend exists)
-js/chat-status.mjs         pending / approved (local until a backend exists)
-js/env.values.mjs          public config (see .env.example)
-js/screens/*.mjs           one module per screen
-
-css/tokens.css             Elead ink/paper tokens (from the Elead studio)
-```
-
-### Screen routing
-
-Native (or you, in preview) set the hash:
-
-| Hash | Screen |
+| Repo | Role |
 | --- | --- |
-| `#screen=INSTALL&localId=0x…` | Product install |
-| `#screen=CHAT&localId=…&remoteId=inbox.elead.eth` | End-user chat |
-| `#screen=CHAT&localId=…&sessionId=11` | Open one lead |
-| `#screen=MAIN&localId=inbox-….elead.eth` | SP dashboard |
-
-If `screen` is omitted: `sessionId`/`remoteId` → chat; `localId` starting with `inbox-` → dashboard; otherwise install.
-
-### Install → ENS
-
-1. Screen reads product fields from the URL, then `js/env.values.mjs`.
-2. User taps **Install**.
-3. If the URL has `url`, `uuid`, `timestamp`, and `packageType`, the HTML sends `install-product`.
-4. Otherwise it sends `new-item` with `customer_id = localId` and `item =` the product ENS. iOS/Android pass that into `installProduct`. A `customer_id` is the pending ENS purchase path.
-
-### Statuses
-
-Native `Message.status` is delivery (sent/delivered). It is not a lead state.
-
-- **Lead status** (SP): `new`, `in_progress`, `hot_lead`, `done`. Stored in `localStorage` as `elead:lead-status:{sessionId}` until Elead has a backend.
-- **Chat status** (end user): `pending`, `approved`. Stored as `elead:chat-status:{threadId}`. The SP **Approve** button on chat (inbox identities only) sets `approved`.
-
-Corrupt storage throws. It does not reset quietly.
+| **Elead-HTML** | This product UI |
+| **Elead** | Vite studio (allot identities, QR to activate a line) |
+| **Arnacon_HTML** | Pattern for `index` + `app` + screens |
+| Android / **arnacon-swift** | Bridge, `installProduct`, sessions, calls |
 
 ## Config
 
 1. Read `.env.example`.
 2. Put public values in `js/env.values.mjs`.
-3. Optional machine override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored).
+3. Optional override: copy `js/env.local.example.mjs` to `js/env.local.mjs` (gitignored).
 
-`js/env.mjs` throws if a required value is empty. Do not put private keys in this repo. Browser-visible config is public.
+`js/env.mjs` throws if a required value is empty. No secrets in this repo.
 
-## Preview without the app
-
-Serve the folder (modules will not load from `file://`):
+## Preview
 
 ```bash
-python3 -m http.server 4173
+python3 -m http.server 4174
 ```
 
-Then open:
+Hard-refresh if an old tab still asks for `dashboard.html`.
 
-- [Install](http://127.0.0.1:4173/index.html?preview=1#screen=INSTALL&localId=0xpreview)
-- [Chat](http://127.0.0.1:4173/index.html?preview=1#screen=CHAT&localId=lead-1a2b3c4d.elead.eth&sessionId=11)
-- [Dashboard](http://127.0.0.1:4173/index.html?preview=1#screen=MAIN&localId=inbox-preview.elead.eth)
+- [SP mainscreen](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=inbox-preview.elead.eth)
+- [End-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=MAIN&localId=lead-1a2b3c4d.elead.eth)
+- [Empty end-user chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-new.elead.eth)
+- [Install](http://127.0.0.1:4174/index.html?preview=1#screen=INSTALL&localId=0xpreview)
+- [Chat](http://127.0.0.1:4174/index.html?preview=1#screen=CHAT&localId=lead-1a2b3c4d.elead.eth&sessionId=11)
+- [Incoming](http://127.0.0.1:4174/index.html?preview=1#screen=INCOMING&localId=0xpreview&from=inbox.elead.eth)
+- [Ringing](http://127.0.0.1:4174/index.html?preview=1#screen=RING&localId=0xpreview&to=inbox.elead.eth)
+- [In call](http://127.0.0.1:4174/index.html?preview=1#screen=CALL&localId=0xpreview&to=inbox.elead.eth)
 
-`preview=1` is required. Without it, missing `webkit` / `AndroidBridge` is a hard error.
-
-## Cursor rules
-
-`.cursor/rules/` encodes: think first, fail loud, naming, simplicity, secrets, and this map. Follow them when changing the product.
+`preview=1` is required in a browser. Without it, a missing native bridge is a hard error.
