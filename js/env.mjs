@@ -1,5 +1,5 @@
 import { requireFiniteNumber, requireNonEmptyString } from './assert.mjs'
-import { envValues } from './env.values.mjs'
+import { envValues } from './env.values.mjs?v=6'
 
 function isLocalHost() {
   const host = window.location.hostname

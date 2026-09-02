@@ -1,6 +1,6 @@
 import { requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs'
+import { loadEnv } from '../env.mjs?v=6'
 import { activateLine, readInstallClaim } from '../activation.mjs'
 
 export async function startInstallScreen() {
