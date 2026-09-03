@@ -3,6 +3,15 @@ import { failOnScreen } from '../screen-fail.mjs'
 import { loadEnv } from '../env.mjs?v=6'
 import { activateLine, readInstallClaim } from '../activation.mjs'
 
+function showWorking(workingNode, button) {
+  workingNode.hidden = false
+  button.hidden = true
+}
+
+function hideWorking(workingNode) {
+  workingNode.hidden = true
+}
+
 export async function startInstallScreen() {
   const env = await loadEnv()
   const claim = readInstallClaim()
@@ -12,6 +21,7 @@ export async function startInstallScreen() {
   const bodyNode = requireElement('product-description')
   const imageNode = requireElement('product-image')
   const button = requireElement('install-button')
+  const workingNode = requireElement('install-working')
   const stateNode = requireElement('install-state')
 
   setText(labelNode, env.productLabel)
@@ -28,6 +38,7 @@ export async function startInstallScreen() {
 
   button.addEventListener('click', () => {
     button.disabled = true
+    showWorking(workingNode, button)
     setText(stateNode, 'Starting activation…')
 
     activateLine({
@@ -40,9 +51,12 @@ export async function startInstallScreen() {
       onStatus: (message) => setText(stateNode, message),
     })
       .then(() => {
+        hideWorking(workingNode)
         setText(stateNode, 'This line is active on this device.')
       })
       .catch((error) => {
+        hideWorking(workingNode)
+        button.hidden = false
         button.disabled = false
         setText(
           stateNode,

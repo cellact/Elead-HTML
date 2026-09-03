@@ -36,3 +36,74 @@
   flex-direction: column;
   gap: var(--space-3);
 }
+
+.working {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.working-status {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-4);
+}
+
+.working-orbit {
+  position: relative;
+  width: 5.5rem;
+  height: 5.5rem;
+}
+
+.working-ring {
+  position: absolute;
+  border: var(--line) solid var(--color-line);
+  border-top-color: var(--color-ink);
+  border-right-color: var(--color-ink);
+}
+
+.working-ring:nth-child(1) {
+  inset: 0;
+  animation: working-spin 1.4s linear infinite;
+}
+
+.working-ring:nth-child(2) {
+  inset: 0.75rem;
+  animation: working-spin-reverse 2s linear infinite;
+}
+
+.working-ring:nth-child(3) {
+  inset: 1.5rem;
+  animation: working-spin 0.85s linear infinite;
+}
+
+.working-caption {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--color-mute);
+}
+
+@keyframes working-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes working-spin-reverse {
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .working-ring {
+    animation: none;
+    border-color: var(--color-line);
+    border-top-color: var(--color-ink);
+  }
+}

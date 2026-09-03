@@ -79,7 +79,7 @@
 }
 
 .bubble-out .bubble-time {
-  color: rgba(243, 241, 235, 0.7);
+  color: color-mix(in srgb, var(--color-paper) 72%, transparent);
 }
 
 .compose {

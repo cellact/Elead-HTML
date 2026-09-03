@@ -2,18 +2,21 @@
   --palette-ink: #0a0a09;
   --palette-paper: #f3f1eb;
   --palette-white: #fcfcfa;
+  --palette-surface-dark: #111110;
+  --palette-muted-dark: #8e8d88;
   --palette-muted-light: #696864;
   --palette-danger: #b42318;
+  --palette-danger-on-dark: #f97066;
 
-  --color-paper: var(--palette-paper);
-  --color-ink: var(--palette-ink);
-  --color-ink-soft: #2a2924;
-  --color-mute: var(--palette-muted-light);
-  --color-line: rgba(10, 10, 9, 0.14);
-  --color-surface: var(--palette-white);
-  --color-danger: var(--palette-danger);
-  --color-hot: #8a3b12;
-  --color-progress: #2a4a3a;
+  --color-paper: var(--palette-surface-dark);
+  --color-ink: var(--palette-paper);
+  --color-ink-soft: #d8d6cf;
+  --color-mute: var(--palette-muted-dark);
+  --color-line: rgba(255, 255, 255, 0.14);
+  --color-surface: #181817;
+  --color-danger: var(--palette-danger-on-dark);
+  --color-hot: #e08a4c;
+  --color-progress: #9ec9b0;
 
   --font-display: 'Newsreader', 'Times New Roman', serif;
   --font-body: 'IBM Plex Sans', ui-sans-serif, system-ui, sans-serif;
