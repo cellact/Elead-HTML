@@ -9,7 +9,7 @@ import {
   threadIdForChat,
   writeChatStatus,
 } from '../chat-status.mjs'
-import { readRoute, requireRemoteId } from '../route.mjs'
+import { readRoute, requireToInbox } from '../route.mjs'
 import { isServiceProvider } from '../role.mjs'
 
 function formatClock(time) {
@@ -71,7 +71,7 @@ async function leadTitle({ controller, env, route, sessionId }) {
   }
 
   if (!sessionId) {
-    return route.remoteId || 'Lead'
+    return route.sessionName || route.remoteId || 'Lead'
   }
 
   const { sessions } = await controller.getRecentSessions(env.sessionRange)
@@ -89,9 +89,10 @@ export async function startChatScreen() {
   const controller = requireController()
   const localId = route.localId || controller.localId
   const provider = isServiceProvider(route)
-  const remoteId = provider ? route.remoteId : requireRemoteId(route)
+  const toInbox = provider ? null : requireToInbox(route)
+  const remoteId = provider ? route.remoteId : toInbox
   const sessionId = route.sessionId || (await findLineSession(controller, env))
-  const threadId = threadIdForChat({ sessionId, remoteId })
+  const threadId = threadIdForChat({ sessionId, remoteId, toInbox })
 
   const titleNode = requireElement('chat-title')
   const eyebrowNode = requireElement('chat-eyebrow')
@@ -106,7 +107,7 @@ export async function startChatScreen() {
     setText(titleNode, await leadTitle({ controller, env, route, sessionId }))
   } else {
     setText(eyebrowNode, 'Provider')
-    setText(titleNode, remoteId)
+    setText(titleNode, toInbox)
   }
 
   paintStatus(statusNode, readChatStatus(threadId))

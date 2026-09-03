@@ -14,6 +14,7 @@ const screens = new Set(Object.values(screenName))
 const routeKeys = [
   'localId',
   'remoteId',
+  'toInbox',
   'sessionId',
   'sessionName',
   'item',
@@ -29,6 +30,10 @@ const routeKeys = [
   'videoCall',
   'identityKind',
 ]
+
+const ensLabelRe = /^(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$/
+const toInboxSuffix = '.global'
+const previewToInbox = 'preview.elead.global'
 
 function readSearch(source) {
   if (!source) {
@@ -58,7 +63,7 @@ function pickParam(query, hash, name) {
 }
 
 function readIsSp(query, hash) {
-  const raw = pickParam(query, hash, 'isSP')
+  const raw = pickParam(query, hash, 'isSP') ?? pickParam(query, hash, 'isSp')
   if (raw == null) {
     return null
   }
@@ -88,7 +93,7 @@ function inferScreen(params) {
     return normalized
   }
 
-  if (params.sessionId || params.remoteId) {
+  if (params.sessionId || params.remoteId || params.toInbox) {
     return screenName.chat
   }
 
@@ -122,22 +127,43 @@ export function requireLocalId(route) {
   )
 }
 
-const previewInboxEns = 'preview'
+export function parseToInbox(value) {
+  const name = requireNonEmptyString(
+    value,
+    'toInbox is missing. Native must open end-user screens with #toInbox={inbox}.{domain}.global.',
+  ).toLowerCase()
 
-export function requireRemoteId(route) {
-  if (route.remoteId) {
-    return requireNonEmptyString(
-      route.remoteId,
-      'remoteId is empty. Native must pass the provider inbox ENS as #remoteId=...',
+  if (!name.endsWith(toInboxSuffix)) {
+    throw new Error(
+      `toInbox must be {inbox}.{domain}.global, got: ${value}`,
     )
   }
 
+  const labels = name.slice(0, -toInboxSuffix.length).split('.')
+  if (
+    labels.length !== 2 ||
+    !ensLabelRe.test(labels[0]) ||
+    !ensLabelRe.test(labels[1])
+  ) {
+    throw new Error(
+      `toInbox must be {inbox}.{domain}.global, got: ${value}`,
+    )
+  }
+
+  return name
+}
+
+export function requireToInbox(route) {
+  if (route.toInbox) {
+    return parseToInbox(route.toInbox)
+  }
+
   if (route.preview) {
-    return previewInboxEns
+    return previewToInbox
   }
 
   throw new Error(
-    'remoteId is missing. Native must open this product with #remoteId=... (the provider inbox ENS).',
+    'toInbox is missing. Native must open end-user screens with #toInbox={inbox}.{domain}.global.',
   )
 }
 
@@ -182,6 +208,9 @@ function writeParams(route, extra = {}) {
       value === '' ||
       value === false
     ) {
+      continue
+    }
+    if (key === 'toInbox' && merged.isSP !== false) {
       continue
     }
     params.set(key, String(value))

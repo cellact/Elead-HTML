@@ -5,7 +5,7 @@ import { isServiceProvider } from './role.mjs'
 import {
   buildAppSrc,
   readRoute,
-  requireRemoteId,
+  requireToInbox,
   screenName,
   syncLocationHash,
 } from './route.mjs'
@@ -60,11 +60,11 @@ async function start() {
     route = Object.freeze({
       ...route,
       screen: screenName.chat,
-      remoteId: requireRemoteId(route),
+      toInbox: requireToInbox(route),
     })
-    syncLocationHash(route)
   }
 
+  syncLocationHash(route)
   requireElement('screen-frame').src = buildAppSrc(route)
   hideFatal()
 }

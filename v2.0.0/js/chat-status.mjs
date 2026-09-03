@@ -67,9 +67,13 @@ export function threadIdForChat(route) {
     return `session:${route.sessionId}`
   }
 
+  if (route.toInbox) {
+    return `remote:${route.toInbox}`
+  }
+
   if (route.remoteId) {
     return `remote:${route.remoteId}`
   }
 
-  throw new Error('Chat status needs a sessionId or remoteId')
+  throw new Error('Chat status needs a sessionId, toInbox, or remoteId')
 }

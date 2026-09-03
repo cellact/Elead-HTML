@@ -8,6 +8,8 @@ GitHub Pages serves the product from `v2.0.0/` so native can open:
 
 `https://cellact.github.io/Elead-HTML/v2.0.0#screen=MAIN&localId=…&identityKind=arnacon&isSP=true|false`
 
+End users also get `toInbox={inbox}.{domain}.global`. That param is omitted for the SP.
+
 ## Product shape
 
 ```
@@ -29,7 +31,7 @@ There is no `newchat.html` or `recentsessions.html`. The session list lives in `
 Role comes from `#isSP=true` or `#isSP=false`. `localId` is the allotted name. It is not inferred from `inbox-` / `lead-` prefixes. `identityKind` is passed through and is not the Elead role.
 
 - **Service provider** (`isSP=true`): `mainscreen.html` lead list, statuses `new` / `in_progress` / `hot_lead` / `done`. Tap a lead to open chat.
-- **End user** (`isSP=false`): `chat.html` is home. Native `MAIN` is rewritten to chat and must include `remoteId` (the provider inbox). Empty threads say to write to start the conversation.
+- **End user** (`isSP=false`): `chat.html` is home. Native `MAIN` is rewritten to chat and must include `toInbox={inbox}.{domain}.global` (the provider). Empty threads say to write to start the conversation.
 
 `chat.html` is shared. The end user sees the provider ENS and chat status only — no **Approve**. The SP sees the lead and can approve. Both can place a call.
 
@@ -39,7 +41,7 @@ Call pages are the same for both roles.
 
 Arnacon always opens `index.html` with a hash. `js/boot.mjs` attaches `window.top.controller`, then the outer iframe loads `app.html`. `app.html` loads the real page in an inner iframe.
 
-`isSP=true` on MAIN stays on the inbox. `isSP=false` on MAIN is rewritten to CHAT before `app.html` loads. `remoteId` is not invented: native must already pass the provider inbox.
+`isSP=true` on MAIN stays on the inbox. `isSP=false` on MAIN is rewritten to CHAT before `app.html` loads. `toInbox` is the provider the end user writes to. It is not invented, and it is not written when `isSP=true`.
 
 ```
 index.html#screen=MAIN&localId=…&isSP=true
@@ -47,8 +49,8 @@ index.html#screen=MAIN&localId=…&isSP=true
   → outer iframe: app.html?screen=MAIN&localId=…&isSP=true
   → inner iframe: mainscreen.html
 
-index.html#screen=MAIN&localId=…&isSP=false&remoteId=…
-  → boot rewrites hash to #screen=CHAT&localId=…&isSP=false&remoteId=…
+index.html#screen=MAIN&localId=…&isSP=false&toInbox={inbox}.{domain}.global
+  → boot rewrites hash to #screen=CHAT&localId=…&isSP=false&toInbox=…
   → outer iframe: app.html?screen=CHAT&…
   → inner iframe: chat.html
 ```
@@ -56,13 +58,13 @@ index.html#screen=MAIN&localId=…&isSP=false&remoteId=…
 | Hash | Page |
 | --- | --- |
 | `#screen=MAIN&localId=…&isSP=true` | SP inbox |
-| `#screen=MAIN&localId=…&isSP=false&remoteId=…` | Rewritten to chat |
+| `#screen=MAIN&localId=…&isSP=false&toInbox={inbox}.{domain}.global` | Rewritten to chat |
 | `#screen=CHAT&localId=…&isSP=true&sessionId=11` | SP thread (Lead + Approve) |
-| `#screen=CHAT&localId=…&isSP=false&remoteId=…` | End-user thread |
-| `#screen=CALL` / `RING` / `INCOMING` | Call UI (keep `isSP`) |
+| `#screen=CHAT&localId=…&isSP=false&toInbox={inbox}.{domain}.global` | End-user thread |
+| `#screen=CALL` / `RING` / `INCOMING` | Call UI (keep `isSP`; keep `toInbox` for end users) |
 | `#screen=INSTALL` | Not used for QR claim. Native loads `install.html` directly. |
 
-If `screen` is omitted: `sessionId` / `remoteId` → chat; otherwise **MAIN**. `isSP` is still required. QR activation does not use this hash router.
+If `screen` is omitted: `sessionId` / `remoteId` / `toInbox` → chat; otherwise **MAIN**. `isSP` is still required. End users still need `toInbox`. QR activation does not use this hash router.
 
 Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`. `app.html` maps those to the call pages and back to home: MAIN for the SP, CHAT for the end user.
 
@@ -96,8 +98,8 @@ python3 -m http.server 4174
 ```
 
 - [SP mainscreen](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=MAIN&localId=preview&isSP=true)
-- [End-user chat](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=MAIN&localId=lad2fc1a4&isSP=false&remoteId=preview)
-- [Empty end-user chat](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=CHAT&localId=lnew&isSP=false&remoteId=preview)
+- [End-user chat](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=MAIN&localId=lad2fc1a4&isSP=false&toInbox=preview.elead.global)
+- [Empty end-user chat](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=CHAT&localId=lnew&isSP=false&toInbox=preview.elead.global)
 - [Install](http://127.0.0.1:4174/v2.0.0/install.html?secret=0x0000000000000000000000000000000000000000000000000000000000000001&label=lpreview1&domain=ronstudio&web3identity=preview.arnacon.global)
 - [SP chat](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=CHAT&localId=preview&isSP=true&sessionId=11)
 - [Incoming](http://127.0.0.1:4174/v2.0.0/index.html?preview=1#screen=INCOMING&localId=0xpreview&from=preview&isSP=true)
