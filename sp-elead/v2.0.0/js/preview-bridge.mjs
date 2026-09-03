@@ -84,6 +84,14 @@ export function createPreviewSend(getController) {
         return
       }
 
+      if (action === 'get-session-id') {
+        const remote = String(body.remoteId || '').toLowerCase()
+        const sessionId =
+          remote === previewLeadId || remote === '11' ? 11 : null
+        respond(controller, body.requestId, { sessionId })
+        return
+      }
+
       if (action === 'get-messages') {
         const sessionId = Number(body.sessionId)
         const rows = Number.isFinite(sessionId) ? previewMessages[sessionId] || [] : []

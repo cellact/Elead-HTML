@@ -42,12 +42,8 @@ function paintStatus(node, status) {
   setText(node, labelForChatStatus(status))
 }
 
-function paintThread(listNode, emptyNode, messages, localId) {
-  const empty = messages.length === 0
-  emptyNode.hidden = !empty
-  listNode.hidden = empty
-
-  if (empty) {
+function paintThread(listNode, messages, localId) {
+  if (!messages || messages.length === 0) {
     replaceChildren(listNode)
     return
   }
@@ -89,7 +85,6 @@ export async function startChatScreen() {
   const eyebrowNode = requireElement('chat-eyebrow')
   const statusNode = requireElement('chat-status')
   const listNode = requireElement('message-list')
-  const emptyNode = requireElement('chat-empty')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
 
@@ -103,15 +98,24 @@ export async function startChatScreen() {
     )
   }
 
-  const { messages } = sessionId
-    ? await controller.getMessages(sessionId, env.messageRange, null, true)
-    : await controller.getMessages(remoteId, env.messageRange, null, false)
+  let resolvedSessionId = sessionId
+  if (!resolvedSessionId && remoteId) {
+    const raw = await controller.getSessionId(remoteId)
+    const value = raw?.sessionId
+    resolvedSessionId =
+      value == null || value === '' || value === 'null' ? null : String(value)
+  }
 
-  paintThread(listNode, emptyNode, messages, localId)
-  listNode.scrollTop = listNode.scrollHeight
-
-  if (sessionId) {
-    controller.updateSessionTimestamp(sessionId)
+  if (resolvedSessionId) {
+    const { messages } = await controller.getMessages(
+      resolvedSessionId,
+      env.messageRange,
+      null,
+      true,
+    )
+    paintThread(listNode, messages, localId)
+    listNode.scrollTop = listNode.scrollHeight
+    controller.updateSessionTimestamp(resolvedSessionId)
   }
 
   controller.on('new-message', ({ message }) => {
@@ -119,12 +123,10 @@ export async function startChatScreen() {
       throw new Error('new-message event is missing message')
     }
 
-    if (sessionId && String(message.sessionId) !== String(sessionId)) {
+    if (resolvedSessionId && String(message.sessionId) !== String(resolvedSessionId)) {
       return
     }
 
-    emptyNode.hidden = true
-    listNode.hidden = false
     listNode.append(renderMessage(message, localId))
     listNode.scrollTop = listNode.scrollHeight
   })
@@ -137,8 +139,8 @@ export async function startChatScreen() {
       return
     }
 
-    if (sessionId) {
-      controller.sendMessage(sessionId, content)
+    if (resolvedSessionId) {
+      controller.sendMessage(resolvedSessionId, content)
     } else {
       controller.sendFirstMessage(remoteId, content)
     }
@@ -147,8 +149,8 @@ export async function startChatScreen() {
   })
 
   requireElement('call-chat').addEventListener('click', () => {
-    if (sessionId) {
-      controller.callSession(sessionId)
+    if (resolvedSessionId) {
+      controller.callSession(resolvedSessionId)
       return
     }
     controller.callRemote(remoteId)

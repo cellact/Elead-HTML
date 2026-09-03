@@ -1,5 +1,5 @@
-import { Controller, detectNativeSend } from './controller.mjs'
-import { createPreviewSend } from './preview-bridge.mjs'
+import { Controller, detectNativeSend } from './controller.mjs?v=11'
+import { createPreviewSend } from './preview-bridge.mjs?v=9'
 import { requireElement, setText } from './dom.mjs'
 import { buildAppSrc, readRoute, syncLocationHash } from './route.mjs'
 

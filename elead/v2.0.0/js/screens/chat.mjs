@@ -41,12 +41,8 @@ function paintStatus(node, status) {
   setText(node, labelForChatStatus(status))
 }
 
-function paintThread(listNode, emptyNode, messages, localId) {
-  const empty = messages.length === 0
-  emptyNode.hidden = !empty
-  listNode.hidden = empty
-
-  if (empty) {
+function paintThread(listNode, messages, localId) {
+  if (!messages || messages.length === 0) {
     replaceChildren(listNode)
     return
   }
@@ -57,10 +53,25 @@ function paintThread(listNode, emptyNode, messages, localId) {
   )
 }
 
-async function findLineSession(controller, env) {
-  const { sessions } = await controller.getRecentSessions(env.sessionRange)
-  const line = sessions.find((session) => !session.isGroup)
-  return line ? String(line.sessionId) : null
+function sessionIdFromNative(raw) {
+  const value = raw?.sessionId
+  if (value == null || value === '' || value === 'null') {
+    return null
+  }
+
+  return String(value)
+}
+
+async function resolveSessionId(controller, route, remoteId) {
+  if (route.sessionId) {
+    return route.sessionId
+  }
+
+  if (!remoteId) {
+    return null
+  }
+
+  return sessionIdFromNative(await controller.getSessionId(remoteId))
 }
 
 export async function startChatScreen() {
@@ -69,14 +80,13 @@ export async function startChatScreen() {
   const controller = requireController()
   const localId = route.localId || controller.localId
   const remoteId = await resolvePermanentTo(route, env)
-  const sessionId = route.sessionId || (await findLineSession(controller, env))
+  const sessionId = await resolveSessionId(controller, route, remoteId)
   const threadId = threadIdForChat({ sessionId, remoteId })
 
   const titleNode = requireElement('chat-title')
   const eyebrowNode = requireElement('chat-eyebrow')
   const statusNode = requireElement('chat-status')
   const listNode = requireElement('message-list')
-  const emptyNode = requireElement('chat-empty')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
 
@@ -84,14 +94,15 @@ export async function startChatScreen() {
   setText(titleNode, remoteId)
   paintStatus(statusNode, readChatStatus(threadId))
 
-  const { messages } = sessionId
-    ? await controller.getMessages(sessionId, env.messageRange, null, true)
-    : await controller.getMessages(remoteId, env.messageRange, null, false)
-
-  paintThread(listNode, emptyNode, messages, localId)
-  listNode.scrollTop = listNode.scrollHeight
-
   if (sessionId) {
+    const { messages } = await controller.getMessages(
+      sessionId,
+      env.messageRange,
+      null,
+      true,
+    )
+    paintThread(listNode, messages, localId)
+    listNode.scrollTop = listNode.scrollHeight
     controller.updateSessionTimestamp(sessionId)
   }
 
@@ -104,8 +115,6 @@ export async function startChatScreen() {
       return
     }
 
-    emptyNode.hidden = true
-    listNode.hidden = false
     listNode.append(renderMessage(message, localId))
     listNode.scrollTop = listNode.scrollHeight
   })

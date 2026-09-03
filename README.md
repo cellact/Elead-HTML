@@ -21,6 +21,10 @@ Role is which product native opens. There is no `isSP` or `toInbox` hash param.
 ## Product shape
 
 ```
+controller/         shared native bridge (Controller, get-messages, calls)
+elead/v2.0.0/       end-user HTML
+sp-elead/v2.0.0/    inbox HTML
+
 index.html          create window.top.controller
 app.html            route native screen → page
 mainscreen.html     SP inbox only (sp-elead)
@@ -32,6 +36,8 @@ errorwindow.html    native error overlay
 install.html        QR claim page (proof → backend; no native install)
 ```
 
+`js/controller.mjs` in each product re-exports `../../../controller/index.mjs`. Edit the shared module, not the shim.
+
 There is no `newchat.html` or `recentsessions.html`. The session list lives in `sp-elead` `mainscreen.html`.
 
 ## Who sees what
@@ -39,7 +45,7 @@ There is no `newchat.html` or `recentsessions.html`. The session list lives in `
 `localId` is the allotted name. `identityKind` is passed through and is not the Elead role.
 
 - **Service provider** (`sp-elead`): `mainscreen.html` lead list, statuses `new` / `in_progress` / `hot_lead` / `done`. Tap a lead to open chat. Chat shows the lead and **Approve**.
-- **End user** (`elead`): `chat.html` is home. Native `MAIN` is rewritten to chat. The permanent `to` is the studio inbox from `GET {getInboxUrl}/{fromDomain}`. Empty threads say to write to start the conversation. No **Approve**.
+- **End user** (`elead`): `chat.html` is home. Native `MAIN` is rewritten to chat. The permanent `to` is the studio inbox from `GET {getInboxUrl}/{fromDomain}`. History loads only after native has a `sessionId`. A new line is a blank thread; send still works. No **Approve**.
 
 `fromDomain` is the studio 2LD. Native should open lead HTML with a full allotted name `{label}.{domain}.global`. A `#domain=` param is also accepted. Browser `preview=1` still mocks native; getInbox is called whenever the allotted name has a real domain.
 
