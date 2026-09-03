@@ -54,8 +54,9 @@ function attachController(route) {
 async function start() {
   let route = readRoute()
   const controller = attachController(route)
+  const provider = isServiceProvider(route)
 
-  if (route.screen === screenName.main && !isServiceProvider(controller.localId)) {
+  if (route.screen === screenName.main && !provider) {
     route = Object.freeze({
       ...route,
       screen: screenName.chat,

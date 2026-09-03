@@ -90,7 +90,7 @@ export function readInstallClaim(location = window.location) {
   )
   const label = requireEnsLabel(
     pickParam(query, hash, 'label'),
-    'label is missing or not a single ENS label. The studio QR must include label (no lead-/inbox- prefix, no domain).',
+    'label is missing or not a single ENS label. The studio QR must include label (no domain).',
   )
   const domain = requireEnsLabel(
     pickParam(query, hash, 'domain'),

@@ -56,7 +56,7 @@ function startApp() {
   })
 
   controller.on('call-ended', () => {
-    openRoleHome(controller.localId)
+    openRoleHome(readRoute())
   })
 
   window.addEventListener('message', (event) => {

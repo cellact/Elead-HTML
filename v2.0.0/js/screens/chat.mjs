@@ -88,7 +88,7 @@ export async function startChatScreen() {
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-  const provider = isServiceProvider(localId)
+  const provider = isServiceProvider(route)
   const remoteId = provider ? route.remoteId : requireRemoteId(route)
   const sessionId = route.sessionId || (await findLineSession(controller, env))
   const threadId = threadIdForChat({ sessionId, remoteId })

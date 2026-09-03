@@ -96,7 +96,7 @@ export async function startMainScreen() {
   const controller = requireController()
   const localId = route.localId || controller.localId
 
-  if (!isServiceProvider(localId)) {
+  if (!isServiceProvider(route)) {
     throw new Error('mainscreen is the service-provider inbox. End users open chat.')
   }
 

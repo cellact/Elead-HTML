@@ -27,6 +27,7 @@ const routeKeys = [
   'from',
   'to',
   'videoCall',
+  'identityKind',
 ]
 
 function readSearch(source) {
@@ -54,6 +55,23 @@ function pickParam(query, hash, name) {
   }
 
   return null
+}
+
+function readIsSp(query, hash) {
+  const raw = pickParam(query, hash, 'isSP')
+  if (raw == null) {
+    return null
+  }
+
+  if (raw === 'true') {
+    return true
+  }
+
+  if (raw === 'false') {
+    return false
+  }
+
+  throw new Error(`isSP must be true or false, got: ${raw}`)
 }
 
 function inferScreen(params) {
@@ -84,6 +102,7 @@ export function readRoute(location = window.location) {
   const params = {
     screen: pickParam(query, hash, 'screen'),
     preview: pickParam(query, hash, 'preview') === '1',
+    isSP: readIsSp(query, hash),
   }
 
   for (const key of routeKeys) {
@@ -103,7 +122,7 @@ export function requireLocalId(route) {
   )
 }
 
-const previewInboxEns = 'inbox-preview.elead.eth'
+const previewInboxEns = 'preview'
 
 export function requireRemoteId(route) {
   if (route.remoteId) {
@@ -149,8 +168,20 @@ function writeParams(route, extra = {}) {
     params.set('preview', '1')
   }
 
+  if (merged.isSP === true) {
+    params.set('isSP', 'true')
+  } else if (merged.isSP === false) {
+    params.set('isSP', 'false')
+  }
+
   for (const [key, value] of Object.entries(merged)) {
-    if (key === 'preview' || value == null || value === '' || value === false) {
+    if (
+      key === 'preview' ||
+      key === 'isSP' ||
+      value == null ||
+      value === '' ||
+      value === false
+    ) {
       continue
     }
     params.set(key, String(value))
