@@ -79,7 +79,7 @@ index.html#screen=MAIN&localId={label}.{domain}.global
 
 If `screen` is omitted: **sp-elead** uses MAIN (or chat when `sessionId` / `remoteId` is present). **elead** always uses chat. QR activation does not use this hash router.
 
-Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`. `app.html` maps those to the call pages and back to home: MAIN for the SP, CHAT for the end user.
+Native also pushes `receiving-call`, `ringing`, `call-started`, and `call-ended`. `app.html` maps those to the call pages and back to chat: the SP thread for that identity, CHAT for the end user.
 
 ## Install
 

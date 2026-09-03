@@ -81,7 +81,7 @@ export async function startChatScreen() {
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-  const remoteId = route.remoteId
+  const remoteId = route.remoteId || route.to || route.from
   const sessionId = route.sessionId
   const threadId = threadIdForChat({ sessionId, remoteId })
 
@@ -99,7 +99,7 @@ export async function startChatScreen() {
 
   if (!sessionId && !remoteId) {
     throw new Error(
-      'Chat is missing sessionId. Open a lead from the inbox.',
+      'Chat is missing sessionId or remoteId. Open a lead from the inbox.',
     )
   }
 

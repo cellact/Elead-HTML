@@ -1,6 +1,6 @@
 import { requireController } from './controller.mjs'
 import { requireElement, setText } from './dom.mjs'
-import { buildScreenSrc, openInboxHome, openScreen, readRoute, screenName } from './route.mjs'
+import { buildScreenSrc, openScreen, readRoute, screenName } from './route.mjs'
 
 function showFatal(error) {
   const banner = document.getElementById('fatal')
@@ -55,7 +55,10 @@ function startApp() {
   })
 
   controller.on('call-ended', () => {
-    openInboxHome()
+    const route = readRoute()
+    openScreen(screenName.chat, {
+      remoteId: route.remoteId || route.to || route.from,
+    })
   })
 
   window.addEventListener('message', (event) => {

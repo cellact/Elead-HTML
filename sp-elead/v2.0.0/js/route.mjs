@@ -144,14 +144,15 @@ function writeParams(route, extra = {}) {
 export function buildScreenSrc(route) {
   const params = writeParams(route)
   params.delete('screen')
-  const query = params.toString()
+  params.set('v', '9')
   const file = screenFile(route.screen)
-  return query === '' ? file : `${file}?${query}`
+  return `${file}?${params.toString()}`
 }
 
 export function buildAppSrc(route) {
   const params = writeParams(route)
   params.set('screen', route.screen)
+  params.set('v', '9')
   return `app.html?${params.toString()}`
 }
 
@@ -175,8 +176,4 @@ export function openScreen(screen, extra = {}) {
   }
   target.location.hash = hash
   return true
-}
-
-export function openInboxHome(extra = {}) {
-  openScreen(screenName.main, extra)
 }
