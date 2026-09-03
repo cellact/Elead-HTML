@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>In call</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/call.css" />
+  </head>
+  <body>
+    <main class="call-screen">
+      <div>
+        <p class="eyebrow">In call</p>
+        <h1 id="peer-id" class="call-peer"></h1>
+        <p id="call-duration" class="mute">00:00</p>
+      </div>
+      <div class="call-actions">
+        <button id="toggle-mute" class="button" type="button" aria-pressed="false">Mute</button>
+        <button id="toggle-hold" class="button" type="button" aria-pressed="false">Hold</button>
+        <button id="hang-up" class="button button-danger" type="button">Hang up</button>
+      </div>
+    </main>
+    <div id="fatal" class="fatal" hidden>
+      <p class="eyebrow">Error</p>
+      <h1 class="fatal-title">Call could not continue.</h1>
+      <p id="fatal-message" class="fatal-message"></p>
+    </div>
+    <script type="module" src="js/screens/voice-call.mjs?v=2"></script>
+  </body>
+</html>

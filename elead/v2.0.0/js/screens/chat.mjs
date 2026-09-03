@@ -3,14 +3,12 @@ import { failOnScreen } from '../screen-fail.mjs'
 import { loadEnv } from '../env.mjs'
 import { requireController } from '../controller.mjs'
 import {
-  chatStatus,
   labelForChatStatus,
   readChatStatus,
   threadIdForChat,
-  writeChatStatus,
 } from '../chat-status.mjs'
-import { readRoute, requireToInbox } from '../route.mjs'
-import { isServiceProvider } from '../role.mjs'
+import { resolvePermanentTo } from '../inbox.mjs'
+import { readRoute } from '../route.mjs'
 
 function formatClock(time) {
   const date = new Date(time)
@@ -65,34 +63,14 @@ async function findLineSession(controller, env) {
   return line ? String(line.sessionId) : null
 }
 
-async function leadTitle({ controller, env, route, sessionId }) {
-  if (route.sessionName) {
-    return route.sessionName
-  }
-
-  if (!sessionId) {
-    return route.sessionName || route.remoteId || 'Lead'
-  }
-
-  const { sessions } = await controller.getRecentSessions(env.sessionRange)
-  const match = sessions.find((session) => String(session.sessionId) === String(sessionId))
-  if (match?.sessionName) {
-    return match.sessionName
-  }
-
-  return `Session ${sessionId}`
-}
-
 export async function startChatScreen() {
   const env = await loadEnv()
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-  const provider = isServiceProvider(route)
-  const toInbox = provider ? null : requireToInbox(route)
-  const remoteId = provider ? route.remoteId : toInbox
+  const remoteId = await resolvePermanentTo(route, env)
   const sessionId = route.sessionId || (await findLineSession(controller, env))
-  const threadId = threadIdForChat({ sessionId, remoteId, toInbox })
+  const threadId = threadIdForChat({ sessionId, remoteId })
 
   const titleNode = requireElement('chat-title')
   const eyebrowNode = requireElement('chat-eyebrow')
@@ -102,14 +80,8 @@ export async function startChatScreen() {
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
 
-  if (provider) {
-    setText(eyebrowNode, 'Lead')
-    setText(titleNode, await leadTitle({ controller, env, route, sessionId }))
-  } else {
-    setText(eyebrowNode, 'Provider')
-    setText(titleNode, toInbox)
-  }
-
+  setText(eyebrowNode, 'Provider')
+  setText(titleNode, remoteId)
   paintStatus(statusNode, readChatStatus(threadId))
 
   const { messages } = sessionId
@@ -162,17 +134,6 @@ export async function startChatScreen() {
     }
     controller.callRemote(remoteId)
   })
-
-  const approve = requireElement('approve-chat')
-  if (provider) {
-    approve.hidden = false
-    approve.addEventListener('click', () => {
-      writeChatStatus(threadId, chatStatus.approved)
-      paintStatus(statusNode, chatStatus.approved)
-    })
-  } else {
-    approve.remove()
-  }
 }
 
 startChatScreen().catch(failOnScreen)

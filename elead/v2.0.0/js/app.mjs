@@ -1,7 +1,6 @@
 import { requireController } from './controller.mjs'
 import { requireElement, setText } from './dom.mjs'
-import { openRoleHome } from './role.mjs'
-import { buildScreenSrc, openScreen, readRoute, screenName } from './route.mjs'
+import { buildScreenSrc, openLeadHome, openScreen, readRoute, screenName } from './route.mjs'
 
 function showFatal(error) {
   const banner = document.getElementById('fatal')
@@ -56,7 +55,7 @@ function startApp() {
   })
 
   controller.on('call-ended', () => {
-    openRoleHome(readRoute())
+    openLeadHome()
   })
 
   window.addEventListener('message', (event) => {

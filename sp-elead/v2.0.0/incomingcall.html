@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-    <title>Elead</title>
+    <title>Incoming call</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -12,15 +12,24 @@
     />
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/shell.css" />
+    <link rel="stylesheet" href="css/call.css" />
   </head>
   <body>
-    <iframe id="screen-frame" title="Elead"></iframe>
+    <main class="call-screen">
+      <div>
+        <p class="eyebrow">Incoming</p>
+        <h1 id="caller-id" class="call-peer"></h1>
+      </div>
+      <div class="call-actions">
+        <button id="accept-call" class="button" type="button">Accept</button>
+        <button id="reject-call" class="button button-danger" type="button">Decline</button>
+      </div>
+    </main>
     <div id="fatal" class="fatal" hidden>
       <p class="eyebrow">Error</p>
-      <h1 class="fatal-title">Elead could not continue.</h1>
+      <h1 class="fatal-title">Incoming call could not continue.</h1>
       <p id="fatal-message" class="fatal-message"></p>
     </div>
-    <script type="module" src="js/boot.mjs?v=6"></script>
+    <script type="module" src="js/screens/incoming-call.mjs?v=2"></script>
   </body>
 </html>

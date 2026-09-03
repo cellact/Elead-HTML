@@ -2,9 +2,6 @@
  * In-browser stand-in for native. Only used when the URL has preview=1.
  */
 
-import { isServiceProvider } from './role.mjs'
-import { readRoute } from './route.mjs'
-
 const previewLeadId = 'lad2fc1a4'
 const previewInboxId = 'preview'
 
@@ -17,17 +14,6 @@ const previewSessions = [
     11,
     previewLeadId,
     2,
-    null,
-    0,
-  ],
-  [
-    'm-2',
-    Date.now() - 3600_000,
-    'l9f8e7d6c',
-    'Is Saturday still open?',
-    12,
-    'l9f8e7d6c',
-    0,
     null,
     0,
   ],
@@ -83,10 +69,13 @@ export function createPreviewSend(getController) {
 
     window.setTimeout(() => {
       if (action === 'get-recent-sessions') {
-        const localId = body.localId
-        const rows = isServiceProvider(readRoute())
-          ? previewSessions
-          : previewSessions.filter((row) => row[2] === localId || row[5] === localId)
+        const localId = String(body.localId || '').toLowerCase()
+        const label = localId.split('.')[0]
+        const rows = previewSessions.filter((row) => {
+          const author = String(row[2] || '').toLowerCase()
+          const name = String(row[5] || '').toLowerCase()
+          return author === localId || name === localId || author === label || name === label
+        })
         respond(controller, body.requestId, { recentSessions: rows })
         return
       }

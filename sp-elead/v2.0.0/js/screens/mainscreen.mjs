@@ -11,7 +11,6 @@ import {
 } from '../lead-status.mjs'
 import { labelForChatStatus, readChatStatus, threadIdForChat } from '../chat-status.mjs'
 import { openScreen, readRoute, screenName } from '../route.mjs'
-import { isServiceProvider } from '../role.mjs'
 
 function formatWhen(time) {
   const date = new Date(time)
@@ -95,10 +94,6 @@ export async function startMainScreen() {
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-
-  if (!isServiceProvider(route)) {
-    throw new Error('mainscreen is the service-provider inbox. End users open chat.')
-  }
 
   const listNode = requireElement('lead-list')
   const emptyNode = requireElement('lead-empty')

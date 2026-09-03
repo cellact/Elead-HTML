@@ -14,7 +14,6 @@ const screens = new Set(Object.values(screenName))
 const routeKeys = [
   'localId',
   'remoteId',
-  'toInbox',
   'sessionId',
   'sessionName',
   'item',
@@ -30,10 +29,6 @@ const routeKeys = [
   'videoCall',
   'identityKind',
 ]
-
-const ensLabelRe = /^(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$/
-const toInboxSuffix = '.global'
-const previewToInbox = 'preview.elead.global'
 
 function readSearch(source) {
   if (!source) {
@@ -62,23 +57,6 @@ function pickParam(query, hash, name) {
   return null
 }
 
-function readIsSp(query, hash) {
-  const raw = pickParam(query, hash, 'isSP') ?? pickParam(query, hash, 'isSp')
-  if (raw == null) {
-    return null
-  }
-
-  if (raw === 'true') {
-    return true
-  }
-
-  if (raw === 'false') {
-    return false
-  }
-
-  throw new Error(`isSP must be true or false, got: ${raw}`)
-}
-
 function inferScreen(params) {
   const requested = params.screen
 
@@ -93,7 +71,7 @@ function inferScreen(params) {
     return normalized
   }
 
-  if (params.sessionId || params.remoteId || params.toInbox) {
+  if (params.sessionId || params.remoteId) {
     return screenName.chat
   }
 
@@ -107,7 +85,6 @@ export function readRoute(location = window.location) {
   const params = {
     screen: pickParam(query, hash, 'screen'),
     preview: pickParam(query, hash, 'preview') === '1',
-    isSP: readIsSp(query, hash),
   }
 
   for (const key of routeKeys) {
@@ -124,46 +101,6 @@ export function requireLocalId(route) {
   return requireNonEmptyString(
     route.localId,
     'localId is missing. Native must open this product with #localId=...',
-  )
-}
-
-export function parseToInbox(value) {
-  const name = requireNonEmptyString(
-    value,
-    'toInbox is missing. Native must open end-user screens with #toInbox={inbox}.{domain}.global.',
-  ).toLowerCase()
-
-  if (!name.endsWith(toInboxSuffix)) {
-    throw new Error(
-      `toInbox must be {inbox}.{domain}.global, got: ${value}`,
-    )
-  }
-
-  const labels = name.slice(0, -toInboxSuffix.length).split('.')
-  if (
-    labels.length !== 2 ||
-    !ensLabelRe.test(labels[0]) ||
-    !ensLabelRe.test(labels[1])
-  ) {
-    throw new Error(
-      `toInbox must be {inbox}.{domain}.global, got: ${value}`,
-    )
-  }
-
-  return name
-}
-
-export function requireToInbox(route) {
-  if (route.toInbox) {
-    return parseToInbox(route.toInbox)
-  }
-
-  if (route.preview) {
-    return previewToInbox
-  }
-
-  throw new Error(
-    'toInbox is missing. Native must open end-user screens with #toInbox={inbox}.{domain}.global.',
   )
 }
 
@@ -194,23 +131,8 @@ function writeParams(route, extra = {}) {
     params.set('preview', '1')
   }
 
-  if (merged.isSP === true) {
-    params.set('isSP', 'true')
-  } else if (merged.isSP === false) {
-    params.set('isSP', 'false')
-  }
-
   for (const [key, value] of Object.entries(merged)) {
-    if (
-      key === 'preview' ||
-      key === 'isSP' ||
-      value == null ||
-      value === '' ||
-      value === false
-    ) {
-      continue
-    }
-    if (key === 'toInbox' && merged.isSP !== false) {
+    if (key === 'preview' || value == null || value === '' || value === false) {
       continue
     }
     params.set(key, String(value))
@@ -253,4 +175,8 @@ export function openScreen(screen, extra = {}) {
   }
   target.location.hash = hash
   return true
+}
+
+export function openInboxHome(extra = {}) {
+  openScreen(screenName.main, extra)
 }

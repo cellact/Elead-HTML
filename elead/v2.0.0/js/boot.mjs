@@ -1,14 +1,7 @@
 import { Controller, detectNativeSend } from './controller.mjs'
 import { createPreviewSend } from './preview-bridge.mjs'
 import { requireElement, setText } from './dom.mjs'
-import { isServiceProvider } from './role.mjs'
-import {
-  buildAppSrc,
-  readRoute,
-  requireToInbox,
-  screenName,
-  syncLocationHash,
-} from './route.mjs'
+import { buildAppSrc, readRoute, syncLocationHash } from './route.mjs'
 
 function showFatal(error) {
   const banner = requireElement('fatal')
@@ -26,7 +19,7 @@ function hideFatal() {
 }
 
 function attachController(route) {
-  const localId = route.localId || (route.preview ? 'preview.elead.eth' : null)
+  const localId = route.localId || (route.preview ? 'lad2fc1a4' : null)
 
   if (!localId) {
     throw new Error(
@@ -52,18 +45,8 @@ function attachController(route) {
 }
 
 async function start() {
-  let route = readRoute()
-  const controller = attachController(route)
-  const provider = isServiceProvider(route)
-
-  if (route.screen === screenName.main && !provider) {
-    route = Object.freeze({
-      ...route,
-      screen: screenName.chat,
-      toInbox: requireToInbox(route),
-    })
-  }
-
+  const route = readRoute()
+  attachController(route)
   syncLocationHash(route)
   requireElement('screen-frame').src = buildAppSrc(route)
   hideFatal()

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Elead</title>
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/shell.css" />
+  </head>
+  <body>
+    <iframe id="screen-frame" title="Elead screen"></iframe>
+    <iframe
+      id="error-frame"
+      title="Error"
+      src="errorwindow.html"
+      hidden
+    ></iframe>
+    <div id="fatal" class="fatal" hidden>
+      <p class="eyebrow">Error</p>
+      <h1 class="fatal-title">Elead could not continue.</h1>
+      <p id="fatal-message" class="fatal-message"></p>
+    </div>
+    <script type="module" src="js/app.mjs?v=7"></script>
+  </body>
+</html>
