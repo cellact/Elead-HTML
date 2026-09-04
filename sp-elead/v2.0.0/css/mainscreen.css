@@ -69,8 +69,12 @@
   color: var(--color-mute);
 }
 
-.lead-row[data-status='hot_lead'] .lead-name {
-  color: var(--color-hot);
+.lead-row[data-status='in_progress'] .lead-name {
+  color: var(--color-progress);
+}
+
+.lead-row[data-status='expired'] .lead-name {
+  color: var(--color-danger);
 }
 
 .lead-row[data-status='done'] {

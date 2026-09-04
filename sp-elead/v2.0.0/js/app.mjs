@@ -1,6 +1,6 @@
 import { requireController } from './controller.mjs'
 import { requireElement, setText } from './dom.mjs'
-import { buildScreenSrc, openScreen, readRoute, screenName } from './route.mjs'
+import { buildScreenSrc, openScreen, readRoute, screenName } from './route.mjs?v=15'
 
 function showFatal(error) {
   const banner = document.getElementById('fatal')

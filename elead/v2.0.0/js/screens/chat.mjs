@@ -1,18 +1,23 @@
 import { el, replaceChildren, requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs'
+import { loadEnv } from '../env.mjs?v=9'
 import { requireController } from '../controller.mjs'
 import {
-  labelForChatStatus,
-  readChatStatus,
-  threadIdForChat,
-} from '../chat-status.mjs'
+  labelForLeadStatus,
+  leadStatus,
+  readLeadStatus,
+} from '../lead-status.mjs'
 import {
   displayInboxName,
   pickInboxFromHistory,
   requireFromDomain,
   resolvePermanentTo,
 } from '../inbox.mjs?v=10'
+import {
+  fetchLeadStatus,
+  leadLabelFromLocalId,
+  splitInboxName,
+} from '../inbox-feed.mjs'
 import { readRoute } from '../route.mjs'
 
 function formatClock(time) {
@@ -43,7 +48,7 @@ function renderMessage(message, localId) {
 
 function paintStatus(node, status) {
   node.dataset.status = status
-  setText(node, labelForChatStatus(status))
+  setText(node, labelForLeadStatus(status))
 }
 
 function paintThread(listNode, messages, localId) {
@@ -71,18 +76,32 @@ export async function startChatScreen() {
     ? fromHistory.remoteId
     : await resolvePermanentTo(route, env)
   const sessionId = fromHistory?.sessionId ?? null
-  const threadId = threadIdForChat({ sessionId, remoteId })
 
   const titleNode = requireElement('chat-title')
   const eyebrowNode = requireElement('chat-eyebrow')
-  const statusNode = requireElement('chat-status')
+  const statusNode = requireElement('lead-status')
   const listNode = requireElement('message-list')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
 
   setText(eyebrowNode, 'Provider')
   setText(titleNode, displayInboxName(fromDomain))
-  paintStatus(statusNode, readChatStatus(threadId))
+
+  const lead = leadLabelFromLocalId(localId)
+  if (route.preview || !remoteId) {
+    paintStatus(
+      statusNode,
+      sessionId ? readLeadStatus(sessionId) : leadStatus.pending,
+    )
+  } else {
+    const { label: inbox, domain } = splitInboxName(remoteId)
+    const status = await fetchLeadStatus(env.inboxFeedUrl, {
+      domain,
+      inbox,
+      lead,
+    })
+    paintStatus(statusNode, status)
+  }
 
   if (sessionId) {
     const { messages } = await controller.getMessages(

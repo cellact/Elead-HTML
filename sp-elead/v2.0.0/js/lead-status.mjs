@@ -1,24 +1,27 @@
-import { unreachable } from './assert.mjs'
-
 export const leadStatus = Object.freeze({
-  new: 'new',
+  pending: 'pending',
   inProgress: 'in_progress',
-  hotLead: 'hot_lead',
   done: 'done',
+  expired: 'expired',
 })
 
 export const leadStatusOrder = Object.freeze([
-  leadStatus.new,
+  leadStatus.pending,
   leadStatus.inProgress,
-  leadStatus.hotLead,
   leadStatus.done,
+  leadStatus.expired,
 ])
 
 const leadStatusLabel = Object.freeze({
-  [leadStatus.new]: 'New',
+  [leadStatus.pending]: 'Pending',
   [leadStatus.inProgress]: 'In progress',
-  [leadStatus.hotLead]: 'Hot lead',
   [leadStatus.done]: 'Done',
+  [leadStatus.expired]: 'Expired',
+})
+
+const legacyLeadStatus = Object.freeze({
+  new: leadStatus.pending,
+  hot_lead: leadStatus.inProgress,
 })
 
 const storagePrefix = 'elead:lead-status:'
@@ -43,11 +46,23 @@ function storageKey(sessionId) {
   return `${storagePrefix}${sessionId}`
 }
 
+function storedStatus(value) {
+  if (isLeadStatus(value)) {
+    return value
+  }
+
+  if (Object.prototype.hasOwnProperty.call(legacyLeadStatus, value)) {
+    return legacyLeadStatus[value]
+  }
+
+  return null
+}
+
 export function readLeadStatus(sessionId, storage = window.localStorage) {
   const raw = storage.getItem(storageKey(sessionId))
 
   if (raw == null) {
-    return leadStatus.new
+    return leadStatus.pending
   }
 
   let parsed
@@ -57,11 +72,12 @@ export function readLeadStatus(sessionId, storage = window.localStorage) {
     throw new Error(`Corrupt lead status for session ${sessionId}`, { cause })
   }
 
-  if (!parsed || !isLeadStatus(parsed.status)) {
+  const status = parsed && storedStatus(parsed.status)
+  if (!status) {
     throw new Error(`Corrupt lead status for session ${sessionId}: ${raw}`)
   }
 
-  return parsed.status
+  return status
 }
 
 export function writeLeadStatus(sessionId, status, storage = window.localStorage) {
@@ -75,8 +91,18 @@ export function writeLeadStatus(sessionId, status, storage = window.localStorage
   )
 }
 
-export function assertKnownLeadStatus(status) {
-  if (!isLeadStatus(status)) {
-    unreachable(status, 'Unknown lead status')
+export function fillLeadStatusSelect(select, current) {
+  if (!isLeadStatus(current)) {
+    throw new Error(`Unknown lead status: ${current}`)
   }
+
+  select.replaceChildren()
+  for (const status of leadStatusOrder) {
+    const option = document.createElement('option')
+    option.value = status
+    option.textContent = leadStatusLabel[status]
+    option.selected = status === current
+    select.append(option)
+  }
+  select.dataset.status = current
 }

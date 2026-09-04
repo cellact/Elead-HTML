@@ -139,14 +139,15 @@ function writeParams(route, extra = {}) {
 export function buildScreenSrc(route) {
   const params = writeParams(route)
   params.delete('screen')
-  const query = params.toString()
+  params.set('v', '15')
   const file = screenFile(route.screen)
-  return query === '' ? file : `${file}?${query}`
+  return `${file}?${params.toString()}`
 }
 
 export function buildAppSrc(route) {
   const params = writeParams(route)
   params.set('screen', route.screen)
+  params.set('v', '15')
   return `app.html?${params.toString()}`
 }
 

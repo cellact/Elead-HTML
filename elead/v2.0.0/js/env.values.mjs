@@ -13,4 +13,5 @@ export const envValues = {
   groupMembersUrl: 'https://elead-backend-309305771885.us-central1.run.app/group-members',
   activateUrl: 'https://elead-backend-309305771885.us-central1.run.app/activateWithProof',
   getInboxUrl: 'https://elead-backend-309305771885.us-central1.run.app/getInbox',
+  inboxFeedUrl: 'https://elead-backend-309305771885.us-central1.run.app/inboxFeed',
 }

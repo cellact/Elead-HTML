@@ -1,7 +1,7 @@
-import { Controller, detectNativeSend } from './controller.mjs?v=11'
+import { Controller, detectNativeSend } from './controller.mjs?v=12'
 import { createPreviewSend } from './preview-bridge.mjs?v=10'
 import { requireElement, setText } from './dom.mjs'
-import { buildAppSrc, readRoute, syncLocationHash } from './route.mjs'
+import { buildAppSrc, readRoute, syncLocationHash } from './route.mjs?v=15'
 
 function showFatal(error) {
   const banner = requireElement('fatal')

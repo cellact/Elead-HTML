@@ -144,7 +144,7 @@ function writeParams(route, extra = {}) {
 export function buildScreenSrc(route) {
   const params = writeParams(route)
   params.delete('screen')
-  params.set('v', '9')
+  params.set('v', '15')
   const file = screenFile(route.screen)
   return `${file}?${params.toString()}`
 }
@@ -152,7 +152,7 @@ export function buildScreenSrc(route) {
 export function buildAppSrc(route) {
   const params = writeParams(route)
   params.set('screen', route.screen)
-  params.set('v', '9')
+  params.set('v', '15')
   return `app.html?${params.toString()}`
 }
 

@@ -1,15 +1,19 @@
 import { el, replaceChildren, requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs'
+import { loadEnv } from '../env.mjs?v=9'
 import { requireController } from '../controller.mjs'
 import {
-  labelForLeadStatus,
+  fillLeadStatusSelect,
   leadStatus,
-  leadStatusOrder,
   readLeadStatus,
   writeLeadStatus,
 } from '../lead-status.mjs'
-import { labelForChatStatus, readChatStatus, threadIdForChat } from '../chat-status.mjs'
+import {
+  fetchLeadStatus,
+  leadLabelFromName,
+  publishLeadStatus,
+  requireInboxIdentity,
+} from '../inbox-feed.mjs'
 import { openScreen, readRoute, screenName } from '../route.mjs'
 
 function formatWhen(time) {
@@ -26,37 +30,51 @@ function formatWhen(time) {
   })
 }
 
-function statusSelect(sessionId, current) {
+function statusSelect(session, current, { controller, env, preview, domain, inbox }) {
   const select = el('select', {
     className: 'status-select',
     'aria-label': 'Lead status',
   })
+  fillLeadStatusSelect(select, current)
 
-  for (const status of leadStatusOrder) {
-    const option = el('option', { value: status }, labelForLeadStatus(status))
-    if (status === current) {
-      option.selected = true
-    }
-    select.append(option)
-  }
-
+  let applied = current
   select.addEventListener('change', () => {
-    writeLeadStatus(sessionId, select.value)
-    select.closest('.lead-row')?.setAttribute('data-status', select.value)
+    const next = select.value
+    const revert = applied
+    select.disabled = true
+    publishLeadStatus({
+      controller,
+      inboxFeedUrl: env.inboxFeedUrl,
+      preview,
+      domain,
+      inbox,
+      lead: leadLabelFromName(session.sessionName),
+      status: next,
+    })
+      .then((saved) => {
+        applied = saved
+        writeLeadStatus(String(session.sessionId), saved)
+        fillLeadStatusSelect(select, saved)
+        select.closest('.lead-row')?.setAttribute('data-status', saved)
+      })
+      .catch((error) => {
+        fillLeadStatusSelect(select, revert)
+        failOnScreen(error)
+      })
+      .finally(() => {
+        select.disabled = false
+      })
   })
 
   return select
 }
 
-function leadRow(session) {
-  const status = readLeadStatus(session.sessionId)
-  const chat = readChatStatus(threadIdForChat({ sessionId: String(session.sessionId) }))
-
+function leadRow(session, current, ctx) {
   return el(
     'article',
     {
       className: 'lead-row',
-      dataset: { status, sessionId: session.sessionId },
+      dataset: { status: current, sessionId: session.sessionId },
     },
     el(
       'button',
@@ -71,13 +89,9 @@ function leadRow(session) {
       },
       el('p', { className: 'lead-name' }, session.sessionName || `Session ${session.sessionId}`),
       el('p', { className: 'lead-preview' }, session.lastMessageContent || 'No message yet'),
-      el(
-        'p',
-        { className: 'lead-meta' },
-        `${formatWhen(session.lastMessageTime)} · Chat ${labelForChatStatus(chat)}`,
-      ),
+      el('p', { className: 'lead-meta' }, formatWhen(session.lastMessageTime)),
     ),
-    statusSelect(session.sessionId, status),
+    statusSelect(session, current, ctx),
   )
 }
 
@@ -94,6 +108,8 @@ export async function startMainScreen() {
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
+  const { domain, inbox } = requireInboxIdentity(localId, route)
+  const ctx = { controller, env, preview: route.preview, domain, inbox }
 
   const listNode = requireElement('lead-list')
   const emptyNode = requireElement('lead-empty')
@@ -105,7 +121,7 @@ export async function startMainScreen() {
   function paint() {
     const filter = filterNode.value
     const visible = leads.filter((session) =>
-      matchesFilter(readLeadStatus(session.sessionId), filter),
+      matchesFilter(readLeadStatus(String(session.sessionId)), filter),
     )
 
     setText(
@@ -120,7 +136,12 @@ export async function startMainScreen() {
     }
 
     emptyNode.hidden = true
-    replaceChildren(listNode, ...visible.map((session) => leadRow(session)))
+    replaceChildren(
+      listNode,
+      ...visible.map((session) =>
+        leadRow(session, readLeadStatus(String(session.sessionId)), ctx),
+      ),
+    )
   }
 
   if (!Object.values(leadStatus).includes(filterNode.value) && filterNode.value !== 'all') {
@@ -130,6 +151,18 @@ export async function startMainScreen() {
   async function loadLeads() {
     const { sessions } = await controller.getRecentSessions(env.sessionRange)
     leads = sessions.filter((session) => !session.isGroup)
+    if (!route.preview) {
+      await Promise.all(
+        leads.map(async (session) => {
+          const status = await fetchLeadStatus(env.inboxFeedUrl, {
+            domain,
+            inbox,
+            lead: leadLabelFromName(session.sessionName),
+          })
+          writeLeadStatus(String(session.sessionId), status)
+        }),
+      )
+    }
     paint()
   }
 

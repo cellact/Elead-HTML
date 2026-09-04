@@ -157,6 +157,41 @@ export class Controller {
     })
   }
 
+  signData(data) {
+    const message = requireNonEmptyString(data, 'sign-data: data is required')
+
+    return new Promise((resolve, reject) => {
+      const timer = setTimeout(() => {
+        this.off('data-retrieved', onRetrieved)
+        this.off('signed-data', onRetrieved)
+        reject(
+          new Error(
+            `Controller: "sign-data" timed out after ${this._requestTimeout}ms`,
+          ),
+        )
+      }, this._requestTimeout)
+
+      const onRetrieved = (body) => {
+        const signature = body?.xsign
+        if (typeof signature !== 'string' || signature.trim() === '') {
+          return
+        }
+
+        this.off('data-retrieved', onRetrieved)
+        this.off('signed-data', onRetrieved)
+        clearTimeout(timer)
+        resolve(signature.trim())
+      }
+
+      this.on('data-retrieved', onRetrieved)
+      this.on('signed-data', onRetrieved)
+      this._send({
+        action: 'sign-data',
+        body: { localId: this.localId, data: message },
+      })
+    })
+  }
+
   setMute(callId, muted) {
     this._send({
       action: 'set-mute',

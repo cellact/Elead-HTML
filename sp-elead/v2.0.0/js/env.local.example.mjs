@@ -5,4 +5,5 @@
 export const envLocal = {
   groupMembersUrl: '',
   activateUrl: '',
+  inboxFeedUrl: 'http://127.0.0.1:8080/inboxFeed',
 }

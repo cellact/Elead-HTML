@@ -124,6 +124,16 @@ export function createPreviewSend(getController) {
         return
       }
 
+      if (action === 'sign-data') {
+        controller.receiveData(
+          JSON.stringify({
+            action: 'data-retrieved',
+            body: { xsign: `0xpreview-${Date.now()}` },
+          }),
+        )
+        return
+      }
+
       if (action === 'send-message') {
         const sessionId = Number(body.sessionId || 11)
         const message = [

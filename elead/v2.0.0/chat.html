@@ -12,19 +12,19 @@
     />
     <link rel="stylesheet" href="css/tokens.css" />
     <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/chat.css?v=12" />
+    <link rel="stylesheet" href="css/chat.css?v=14" />
   </head>
   <body>
     <main class="screen">
       <header class="chat-header">
-        <div>
+        <div class="chat-identity">
           <p id="chat-eyebrow" class="eyebrow">Line</p>
           <h1 id="chat-title" class="chat-title"></h1>
+          <div class="chat-meta">
+            <p id="lead-status" class="chat-status"></p>
+          </div>
         </div>
-        <div class="header-actions">
-          <p id="chat-status" class="chat-status"></p>
-          <button id="call-chat" class="button button-ghost" type="button">Call</button>
-        </div>
+        <button id="call-chat" class="button button-ghost" type="button">Call</button>
       </header>
       <div id="message-list" class="message-list"></div>
       <form id="compose-form" class="compose">
@@ -45,6 +45,6 @@
       <h1 class="fatal-title">Chat could not continue.</h1>
       <p id="fatal-message" class="fatal-message"></p>
     </div>
-    <script type="module" src="js/screens/chat.mjs?v=11"></script>
+    <script type="module" src="js/screens/chat.mjs?v=13"></script>
   </body>
 </html>

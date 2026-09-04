@@ -4,4 +4,5 @@
  */
 export const envLocal = {
   getInboxUrl: 'http://127.0.0.1:8080/getInbox',
+  inboxFeedUrl: 'http://127.0.0.1:8080/inboxFeed',
 }

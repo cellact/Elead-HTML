@@ -1,5 +1,5 @@
 import { requireFiniteNumber, requireNonEmptyString } from './assert.mjs'
-import { envValues } from './env.values.mjs?v=8'
+import { envValues } from './env.values.mjs?v=9'
 
 function isLocalHost() {
   const host = window.location.hostname
@@ -74,5 +74,6 @@ export async function loadEnv() {
       typeof merged.groupMembersUrl === 'string' ? merged.groupMembersUrl.trim() : '',
     activateUrl: typeof merged.activateUrl === 'string' ? merged.activateUrl.trim() : '',
     getInboxUrl: requiredString(merged, 'getInboxUrl', 'ELEAD_GET_INBOX_URL'),
+    inboxFeedUrl: requiredString(merged, 'inboxFeedUrl', 'ELEAD_INBOX_FEED_URL'),
   })
 }

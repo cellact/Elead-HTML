@@ -12,7 +12,7 @@
     />
     <link rel="stylesheet" href="css/tokens.css?v=9" />
     <link rel="stylesheet" href="css/base.css" />
-    <link rel="stylesheet" href="css/mainscreen.css" />
+    <link rel="stylesheet" href="css/mainscreen.css?v=8" />
   </head>
   <body>
     <main class="screen">
@@ -28,10 +28,10 @@
             <span class="eyebrow">Status</span>
             <select id="status-filter" class="status-filter">
               <option value="all">All</option>
-              <option value="new">New</option>
+              <option value="pending">Pending</option>
               <option value="in_progress">In progress</option>
-              <option value="hot_lead">Hot lead</option>
               <option value="done">Done</option>
+              <option value="expired">Expired</option>
             </select>
           </label>
         </div>
@@ -44,6 +44,6 @@
       <h1 class="fatal-title">Elead could not continue.</h1>
       <p id="fatal-message" class="fatal-message"></p>
     </div>
-    <script type="module" src="js/screens/mainscreen.mjs?v=7"></script>
+    <script type="module" src="js/screens/mainscreen.mjs?v=10"></script>
   </body>
 </html>

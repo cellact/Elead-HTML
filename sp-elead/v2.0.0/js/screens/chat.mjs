@@ -1,14 +1,19 @@
 import { el, replaceChildren, requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs'
+import { loadEnv } from '../env.mjs?v=9'
 import { requireController } from '../controller.mjs'
 import {
-  chatStatus,
-  labelForChatStatus,
-  readChatStatus,
-  threadIdForChat,
-  writeChatStatus,
-} from '../chat-status.mjs'
+  fillLeadStatusSelect,
+  leadStatus,
+  readLeadStatus,
+  writeLeadStatus,
+} from '../lead-status.mjs'
+import {
+  fetchLeadStatus,
+  leadLabelFromName,
+  publishLeadStatus,
+  requireInboxIdentity,
+} from '../inbox-feed.mjs'
 import { readRoute } from '../route.mjs'
 
 function formatClock(time) {
@@ -35,11 +40,6 @@ function renderMessage(message, localId) {
     el('p', { className: 'bubble-text' }, message.content),
     el('time', { className: 'bubble-time' }, formatClock(message.time)),
   )
-}
-
-function paintStatus(node, status) {
-  node.dataset.status = status
-  setText(node, labelForChatStatus(status))
 }
 
 function paintThread(listNode, messages, localId) {
@@ -80,24 +80,26 @@ export async function startChatScreen() {
   const localId = route.localId || controller.localId
   const remoteId = route.remoteId || route.to || route.from
   const sessionId = route.sessionId
-  const threadId = threadIdForChat({ sessionId, remoteId })
-
   const titleNode = requireElement('chat-title')
   const eyebrowNode = requireElement('chat-eyebrow')
-  const statusNode = requireElement('chat-status')
+  const statusNode = requireElement('lead-status')
   const listNode = requireElement('message-list')
   const form = requireElement('compose-form')
   const input = requireElement('compose-input')
 
   setText(eyebrowNode, 'Lead')
   setText(titleNode, await leadTitle({ controller, env, route, sessionId }))
-  paintStatus(statusNode, readChatStatus(threadId))
 
   if (!sessionId && !remoteId) {
     throw new Error(
       'Chat is missing sessionId or remoteId. Open a lead from the inbox.',
     )
   }
+
+  const { domain, inbox } = requireInboxIdentity(localId, route)
+  const lead = leadLabelFromName(
+    route.sessionName || (await leadTitle({ controller, env, route, sessionId })),
+  )
 
   let resolvedSessionId = sessionId
   if (!resolvedSessionId && remoteId) {
@@ -118,6 +120,48 @@ export async function startChatScreen() {
     listNode.scrollTop = listNode.scrollHeight
     controller.updateSessionTimestamp(resolvedSessionId)
   }
+
+  const current = resolvedSessionId
+    ? route.preview
+      ? readLeadStatus(resolvedSessionId)
+      : await fetchLeadStatus(env.inboxFeedUrl, { domain, inbox, lead }).then(
+          (status) => {
+            writeLeadStatus(resolvedSessionId, status)
+            return status
+          },
+        )
+    : leadStatus.pending
+  fillLeadStatusSelect(statusNode, current)
+  statusNode.disabled = !resolvedSessionId
+  statusNode.addEventListener('change', () => {
+    if (!resolvedSessionId) {
+      throw new Error('Cannot set lead status: no session')
+    }
+
+    const next = statusNode.value
+    const revert = statusNode.dataset.status
+    statusNode.disabled = true
+    publishLeadStatus({
+      controller,
+      inboxFeedUrl: env.inboxFeedUrl,
+      preview: route.preview,
+      domain,
+      inbox,
+      lead,
+      status: next,
+    })
+      .then((saved) => {
+        writeLeadStatus(resolvedSessionId, saved)
+        fillLeadStatusSelect(statusNode, saved)
+      })
+      .catch((error) => {
+        fillLeadStatusSelect(statusNode, revert)
+        failOnScreen(error)
+      })
+      .finally(() => {
+        statusNode.disabled = false
+      })
+  })
 
   controller.on('new-message', ({ message }) => {
     if (!message) {
@@ -155,11 +199,6 @@ export async function startChatScreen() {
       return
     }
     controller.callRemote(remoteId)
-  })
-
-  requireElement('approve-chat').addEventListener('click', () => {
-    writeChatStatus(threadId, chatStatus.approved)
-    paintStatus(statusNode, chatStatus.approved)
   })
 }
 
