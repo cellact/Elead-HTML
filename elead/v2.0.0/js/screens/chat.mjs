@@ -47,9 +47,10 @@ function paintThread(listNode, messages, localId) {
     return
   }
 
+  const chronological = [...messages].sort((a, b) => a.time - b.time)
   replaceChildren(
     listNode,
-    ...messages.map((message) => renderMessage(message, localId)),
+    ...chronological.map((message) => renderMessage(message, localId)),
   )
 }
 
