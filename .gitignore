@@ -1,7 +1,7 @@
 .DS_Store
 .env
-elead/v2.0.0/js/env.local.mjs
-sp-elead/v2.0.0/js/env.local.mjs
+aegis/v2.0.0/js/env.local.mjs
+sp-aegis/v2.0.0/js/env.local.mjs
 
 .cursor/
 

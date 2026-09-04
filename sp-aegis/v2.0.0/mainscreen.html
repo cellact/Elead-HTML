@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Aegis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css?v=9" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/mainscreen.css?v=8" />
+  </head>
+  <body>
+    <main class="screen">
+      <header class="dash-header">
+        <div>
+          <p class="eyebrow">Inbox</p>
+          <h1 class="heading">Leads</h1>
+          <p id="inbox-id" class="inbox-id"></p>
+        </div>
+        <div class="dash-tools">
+          <p id="lead-count" class="lead-count"></p>
+          <label>
+            <span class="eyebrow">Status</span>
+            <select id="status-filter" class="status-filter">
+              <option value="all">All</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In progress</option>
+              <option value="done">Done</option>
+              <option value="expired">Expired</option>
+            </select>
+          </label>
+        </div>
+      </header>
+      <p id="lead-empty" class="lead-empty" hidden>No leads in this status.</p>
+      <div id="lead-list" class="lead-list"></div>
+    </main>
+    <div id="fatal" class="fatal" hidden>
+      <p class="eyebrow">Error</p>
+      <h1 class="fatal-title">Aegis could not continue.</h1>
+      <p id="fatal-message" class="fatal-message"></p>
+    </div>
+    <script type="module" src="js/screens/mainscreen.mjs?v=10"></script>
+  </body>
+</html>

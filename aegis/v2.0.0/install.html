@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Install Aegis</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400&family=IBM+Plex+Sans:wght@400;500&family=Newsreader:opsz,wght@6..72,400&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="css/tokens.css" />
+    <link rel="stylesheet" href="css/base.css" />
+    <link rel="stylesheet" href="css/install.css?v=9" />
+  </head>
+  <body>
+    <main class="screen">
+      <div class="screen-body install">
+        <p class="eyebrow">Line</p>
+        <img id="product-image" class="product-image" alt="" hidden />
+        <h1 id="product-label" class="heading">Aegis</h1>
+        <p id="product-ens" class="product-ens"></p>
+        <p id="product-description" class="mute"></p>
+        <div class="install-actions">
+          <button id="install-button" class="button" type="button">Activate</button>
+          <div
+            id="install-working"
+            class="working"
+            hidden
+          >
+            <div
+              class="working-status"
+              role="status"
+              aria-live="polite"
+              aria-busy="true"
+              aria-label="Activating"
+            >
+              <div class="working-orbit" aria-hidden="true">
+                <span class="working-ring"></span>
+                <span class="working-ring"></span>
+                <span class="working-ring"></span>
+              </div>
+              <p class="working-caption">Working</p>
+            </div>
+          </div>
+          <p id="install-state" class="install-state"></p>
+        </div>
+      </div>
+    </main>
+    <div id="fatal" class="fatal" hidden>
+      <p class="eyebrow">Error</p>
+      <h1 class="fatal-title">Install could not continue.</h1>
+      <p id="fatal-message" class="fatal-message"></p>
+    </div>
+    <script type="module" src="js/screens/install.mjs?v=8"></script>
+  </body>
+</html>
