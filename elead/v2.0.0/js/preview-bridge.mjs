@@ -12,7 +12,7 @@ const previewSessions = [
     previewLeadId,
     'I need a quote for next week.',
     11,
-    previewLeadId,
+    'inbox.preview.global',
     2,
     null,
     0,
@@ -71,11 +71,7 @@ export function createPreviewSend(getController) {
       if (action === 'get-recent-sessions') {
         const localId = String(body.localId || '').toLowerCase()
         const label = localId.split('.')[0]
-        const rows = previewSessions.filter((row) => {
-          const author = String(row[2] || '').toLowerCase()
-          const name = String(row[5] || '').toLowerCase()
-          return author === localId || name === localId || author === label || name === label
-        })
+        const rows = label === previewLeadId ? previewSessions : []
         respond(controller, body.requestId, { recentSessions: rows })
         return
       }
@@ -84,7 +80,8 @@ export function createPreviewSend(getController) {
         const remote = String(body.remoteId || '').toLowerCase()
         const known =
           remote === previewInboxId ||
-          remote === `${previewInboxId}.elead.global`
+          remote === `${previewInboxId}.elead.global` ||
+          remote === 'inbox.preview.global'
         respond(controller, body.requestId, { sessionId: known ? 11 : null })
         return
       }

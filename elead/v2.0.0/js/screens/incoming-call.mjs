@@ -1,6 +1,7 @@
 import { failOnScreen } from '../screen-fail.mjs'
 import { requireController } from '../controller.mjs'
 import { requireElement, setText } from '../dom.mjs'
+import { displayInboxName, requireFromDomain } from '../inbox.mjs?v=10'
 import { readRoute } from '../route.mjs'
 
 function startIncomingCall() {
@@ -12,7 +13,7 @@ function startIncomingCall() {
     throw new Error('Incoming call is missing from / sessionId')
   }
 
-  setText(requireElement('caller-id'), route.sessionName || route.from || callId)
+  setText(requireElement('caller-id'), displayInboxName(requireFromDomain(route)))
 
   requireElement('accept-call').addEventListener('click', () => {
     controller.acceptCall(callId)

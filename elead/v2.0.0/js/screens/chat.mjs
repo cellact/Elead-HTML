@@ -7,7 +7,12 @@ import {
   readChatStatus,
   threadIdForChat,
 } from '../chat-status.mjs'
-import { resolvePermanentTo } from '../inbox.mjs'
+import {
+  displayInboxName,
+  pickInboxFromHistory,
+  requireFromDomain,
+  resolvePermanentTo,
+} from '../inbox.mjs?v=10'
 import { readRoute } from '../route.mjs'
 
 function formatClock(time) {
@@ -54,34 +59,18 @@ function paintThread(listNode, messages, localId) {
   )
 }
 
-function sessionIdFromNative(raw) {
-  const value = raw?.sessionId
-  if (value == null || value === '' || value === 'null') {
-    return null
-  }
-
-  return String(value)
-}
-
-async function resolveSessionId(controller, route, remoteId) {
-  if (route.sessionId) {
-    return route.sessionId
-  }
-
-  if (!remoteId) {
-    return null
-  }
-
-  return sessionIdFromNative(await controller.getSessionId(remoteId))
-}
-
 export async function startChatScreen() {
   const env = await loadEnv()
   const route = readRoute()
   const controller = requireController()
   const localId = route.localId || controller.localId
-  const remoteId = await resolvePermanentTo(route, env)
-  const sessionId = await resolveSessionId(controller, route, remoteId)
+  const fromDomain = requireFromDomain(route)
+  const { sessions } = await controller.getRecentSessions(env.sessionRange)
+  const fromHistory = pickInboxFromHistory(sessions, fromDomain)
+  const remoteId = fromHistory
+    ? fromHistory.remoteId
+    : await resolvePermanentTo(route, env)
+  const sessionId = fromHistory?.sessionId ?? null
   const threadId = threadIdForChat({ sessionId, remoteId })
 
   const titleNode = requireElement('chat-title')
@@ -92,7 +81,7 @@ export async function startChatScreen() {
   const input = requireElement('compose-input')
 
   setText(eyebrowNode, 'Provider')
-  setText(titleNode, remoteId)
+  setText(titleNode, displayInboxName(fromDomain))
   paintStatus(statusNode, readChatStatus(threadId))
 
   if (sessionId) {
@@ -130,8 +119,10 @@ export async function startChatScreen() {
 
     if (sessionId) {
       controller.sendMessage(sessionId, content)
-    } else {
+    } else if (remoteId) {
       controller.sendFirstMessage(remoteId, content)
+    } else {
+      throw new Error('Cannot send: no session in history and no inbox to')
     }
 
     input.value = ''
@@ -141,6 +132,9 @@ export async function startChatScreen() {
     if (sessionId) {
       controller.callSession(sessionId)
       return
+    }
+    if (!remoteId) {
+      throw new Error('Cannot call: no session in history and no inbox to')
     }
     controller.callRemote(remoteId)
   })

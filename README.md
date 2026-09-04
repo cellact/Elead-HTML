@@ -45,9 +45,9 @@ There is no `newchat.html` or `recentsessions.html`. The session list lives in `
 `localId` is the allotted name. `identityKind` is passed through and is not the Elead role.
 
 - **Service provider** (`sp-elead`): `mainscreen.html` lead list, statuses `new` / `in_progress` / `hot_lead` / `done`. Tap a lead to open chat. Chat shows the lead and **Approve**.
-- **End user** (`elead`): `chat.html` is home. Native `MAIN` is rewritten to chat. The permanent `to` is the studio inbox from `GET {getInboxUrl}/{fromDomain}`. History loads only after native has a `sessionId`. A new line is a blank thread; send still works. No **Approve**.
+- **End user** (`elead`): `chat.html` is home. Native `MAIN` is rewritten to chat. If native history already has a session, that inbox is the `to`. If not, `GET {getInboxUrl}/{fromDomain}` returns a random claimed inbox and that becomes the `to`. The lead always sees the studio domain (e.g. `rani`), even when the real remote is `inbox1.{domain}.global`. History loads only after native has a `sessionId`. A new line is a blank thread; send still works. No **Approve**.
 
-`fromDomain` is the studio 2LD. Native should open lead HTML with a full allotted name `{label}.{domain}.global`. A `#domain=` param is also accepted. Browser `preview=1` still mocks native; getInbox is called whenever the allotted name has a real domain.
+`fromDomain` is the studio 2LD. Native should open lead HTML with a full allotted name `{label}.{domain}.global`. A `#domain=` param is also accepted. Browser `preview=1` still mocks native. getInbox is called only when history is empty and the allotted name has a real domain.
 
 Call pages are the same in both products.
 
@@ -71,7 +71,7 @@ index.html#screen=MAIN&localId={label}.{domain}.global
   → boot rewrites hash to #screen=CHAT&localId=…
   → outer iframe: app.html?screen=CHAT&…
   → inner iframe: chat.html
-  → chat GET getInbox/{fromDomain} for the permanent to
+  → chat uses history for to, or GET getInbox/{fromDomain} on first message
 ```
 
 | Hash | Product | Page |

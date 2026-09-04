@@ -1,6 +1,7 @@
 import { failOnScreen } from '../screen-fail.mjs'
 import { requireController } from '../controller.mjs'
 import { requireElement, setText } from '../dom.mjs'
+import { displayInboxName, requireFromDomain } from '../inbox.mjs?v=10'
 import { readRoute } from '../route.mjs'
 
 function formatDuration(seconds) {
@@ -18,7 +19,7 @@ function startVoiceCall() {
     throw new Error('Voice call is missing to / from / sessionId')
   }
 
-  setText(requireElement('peer-id'), route.sessionName || callId)
+  setText(requireElement('peer-id'), displayInboxName(requireFromDomain(route)))
 
   const muteButton = requireElement('toggle-mute')
   const holdButton = requireElement('toggle-hold')

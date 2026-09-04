@@ -2,7 +2,7 @@ import { requireNonEmptyString } from './assert.mjs'
 
 const ensLabelRe = /^(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$/
 const inboxSuffix = '.global'
-const previewInbox = 'preview.elead.global'
+const previewInbox = 'inbox.preview.global'
 const previewDomain = 'preview'
 
 function studioDomainFrom(value) {
@@ -40,6 +40,75 @@ export function parseInboxName(value) {
   }
 
   return name
+}
+
+export function displayInboxName(fromDomain) {
+  const domain = studioDomainFrom(fromDomain)
+  if (!ensLabelRe.test(domain)) {
+    throw new Error(`fromDomain is missing or not a studio 2LD: ${fromDomain}`)
+  }
+
+  return domain
+}
+
+function expandSessionInboxName(raw, domain) {
+  const name = String(raw || '')
+    .trim()
+    .toLowerCase()
+  if (!name) {
+    return null
+  }
+
+  const parts = (name.endsWith(inboxSuffix)
+    ? name.slice(0, -inboxSuffix.length)
+    : name
+  )
+    .split('.')
+    .filter(Boolean)
+
+  if (parts.length === 1 && ensLabelRe.test(domain)) {
+    return `${parts[0]}.${domain}${inboxSuffix}`
+  }
+
+  return name.endsWith(inboxSuffix) ? name : `${name}${inboxSuffix}`
+}
+
+function remoteIdFromSession(session, domain) {
+  const expanded = expandSessionInboxName(session.sessionName, domain)
+  if (!expanded || !expanded.endsWith(inboxSuffix)) {
+    return null
+  }
+
+  const labels = expanded.slice(0, -inboxSuffix.length).split('.')
+  if (
+    labels.length !== 2 ||
+    !ensLabelRe.test(labels[0]) ||
+    labels[1] !== domain
+  ) {
+    return null
+  }
+
+  return expanded
+}
+
+export function pickInboxFromHistory(sessions, fromDomain) {
+  if (!Array.isArray(sessions)) {
+    throw new Error('get-recent-sessions: native response is missing sessions[]')
+  }
+
+  const domain = studioDomainFrom(fromDomain)
+  const directs = sessions.filter((session) => !session.isGroup)
+  if (directs.length === 0) {
+    return null
+  }
+
+  const matched = directs.find((session) => remoteIdFromSession(session, domain))
+  const chosen = matched || directs[0]
+
+  return {
+    sessionId: String(chosen.sessionId),
+    remoteId: remoteIdFromSession(chosen, domain),
+  }
 }
 
 export function requireFromDomain(route) {
