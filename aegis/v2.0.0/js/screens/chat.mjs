@@ -1,6 +1,6 @@
 import { el, replaceChildren, requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs?v=9'
+import { loadEnv } from '../env.mjs?v=10'
 import { requireController } from '../controller.mjs'
 import {
   labelForLeadStatus,
@@ -12,7 +12,7 @@ import {
   pickInboxFromHistory,
   requireFromDomain,
   resolvePermanentTo,
-} from '../inbox.mjs?v=10'
+} from '../inbox.mjs?v=11'
 import {
   fetchLeadStatus,
   leadLabelFromLocalId,

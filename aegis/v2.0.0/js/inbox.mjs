@@ -23,7 +23,7 @@ function studioDomainFrom(value) {
 export function parseInboxName(value) {
   const name = requireNonEmptyString(
     value,
-    'getInbox: inbox name is empty',
+    'inbox name is empty',
   ).toLowerCase()
 
   if (!name.endsWith(inboxSuffix)) {
@@ -143,60 +143,140 @@ export function requireFromDomain(route) {
   )
 }
 
-function inboxFromResponse(data) {
-  if (data == null || typeof data !== 'object' || Array.isArray(data)) {
-    throw new Error('getInbox: response is missing inbox')
+const ETHERS_MODULE = 'https://esm.sh/ethers@5.8.0'
+const INBOX_LIST_KEY = 'inboxList'
+const RESOLVER_ABI = ['function text(bytes32 node, string key) view returns (string)']
+
+let ethersLib = null
+
+async function loadEthers() {
+  if (ethersLib) {
+    return ethersLib
   }
 
-  if (typeof data.inbox !== 'string' || data.inbox.trim() === '') {
-    throw new Error('getInbox: response is missing inbox')
+  const mod = await import(ETHERS_MODULE)
+  const ethers = mod.ethers ?? mod.default
+  if (ethers?.utils == null || ethers?.Contract == null) {
+    throw new Error('inboxList: ethers is missing from the CDN module')
   }
 
-  return parseInboxName(data.inbox)
+  ethersLib = ethers
+  return ethers
 }
 
-async function readJson(res) {
-  const raw = await res.text()
-  if (raw.trim() === '') {
-    return {}
+function normalizeInboxStatus(value) {
+  return String(value || '')
+    .trim()
+    .toLowerCase() === 'inactive'
+    ? 'inactive'
+    : 'active'
+}
+
+function parseInboxList(raw, domain) {
+  const text = String(raw || '').trim()
+  if (text === '') {
+    throw new Error(`No inboxList text on ${domain}.global`)
   }
 
+  let data
   try {
-    return JSON.parse(raw)
+    data = JSON.parse(text)
   } catch (cause) {
-    throw new Error(
-      `getInbox returned non-JSON (${res.status}): ${raw.slice(0, 180)}`,
-      { cause },
-    )
+    throw new Error(`inboxList on ${domain}.global is not JSON: ${text.slice(0, 180)}`, {
+      cause,
+    })
   }
+
+  if (!Array.isArray(data)) {
+    throw new Error(`inboxList on ${domain}.global is not an array`)
+  }
+
+  const out = []
+  const seen = new Set()
+
+  for (const row of data) {
+    let label = ''
+    let fullName = ''
+    let status = 'active'
+
+    if (typeof row === 'string') {
+      fullName = row.trim().toLowerCase()
+      if (!fullName.endsWith(inboxSuffix)) {
+        continue
+      }
+      const parts = fullName.slice(0, -inboxSuffix.length).split('.').filter(Boolean)
+      if (parts.length < 1) {
+        continue
+      }
+      label = parts[0]
+    } else if (row && typeof row === 'object') {
+      label = String(row.label || '')
+        .trim()
+        .toLowerCase()
+      fullName = String(row.fullName || '')
+        .trim()
+        .toLowerCase()
+      if (!fullName && label) {
+        fullName = `${label}.${domain}${inboxSuffix}`
+      }
+      status = normalizeInboxStatus(row.status)
+    }
+
+    if (!label || !fullName || seen.has(label)) {
+      continue
+    }
+
+    seen.add(label)
+    out.push({ label, fullName, status })
+  }
+
+  if (out.length === 0) {
+    throw new Error(`inboxList on ${domain}.global has no inboxes`)
+  }
+
+  return out
 }
 
-export async function fetchPermanentTo(getInboxUrl, fromDomain) {
-  const base = requireNonEmptyString(
-    getInboxUrl,
-    'Missing AEGIS_GET_INBOX_URL. Set it in js/env.values.mjs or js/env.local.mjs.',
-  ).replace(/\/+$/, '')
+function pickActiveInbox(rows, domain) {
+  const active = rows.filter((row) => row.status === 'active')
+  if (active.length === 0) {
+    throw new Error(`No active inboxList entries for ${domain}`)
+  }
+
+  const bytes = new Uint32Array(1)
+  crypto.getRandomValues(bytes)
+  const picked = active[bytes[0] % active.length]
+  return parseInboxName(picked.fullName)
+}
+
+export async function fetchPermanentTo(env, fromDomain) {
   const domain = studioDomainFrom(fromDomain)
   if (!ensLabelRe.test(domain)) {
-    throw new Error(
-      `fromDomain is missing or not a studio 2LD: ${fromDomain}`,
-    )
+    throw new Error(`fromDomain is missing or not a studio 2LD: ${fromDomain}`)
   }
-  const url = `${base}/${encodeURIComponent(domain)}`
 
-  const res = await fetch(url, {
-    method: 'GET',
-    headers: { Accept: 'application/json' },
+  const rpcUrl = requireNonEmptyString(
+    env.ensRpcUrl,
+    'Missing AEGIS_ENS_RPC_URL. Set it in js/env.values.mjs or js/env.local.mjs.',
+  )
+  const publicResolver = requireNonEmptyString(
+    env.publicResolver,
+    'Missing AEGIS_PUBLIC_RESOLVER. Set it in js/env.values.mjs or js/env.local.mjs.',
+  )
+  const chainId = env.ensChainId
+  if (!Number.isInteger(chainId) || chainId < 1) {
+    throw new Error('AEGIS_ENS_CHAIN_ID must be an integer greater than 0.')
+  }
+
+  const ethers = await loadEthers()
+  const provider = new ethers.providers.JsonRpcProvider(rpcUrl, {
+    name: chainId === 137 ? 'matic' : 'sepolia',
+    chainId,
   })
-  const data = await readJson(res)
-
-  if (!res.ok) {
-    const error =
-      typeof data.error === 'string' ? data.error : 'Failed to fetch inbox'
-    throw new Error(`${error} (${res.status})`)
-  }
-
-  return inboxFromResponse(data)
+  const resolver = new ethers.Contract(publicResolver, RESOLVER_ABI, provider)
+  const node = ethers.utils.namehash(`${domain}${inboxSuffix}`)
+  const raw = await resolver.text(node, INBOX_LIST_KEY)
+  return pickActiveInbox(parseInboxList(raw, domain), domain)
 }
 
 export async function resolvePermanentTo(route, env) {
@@ -206,5 +286,5 @@ export async function resolvePermanentTo(route, env) {
     return previewInbox
   }
 
-  return fetchPermanentTo(env.getInboxUrl, fromDomain)
+  return fetchPermanentTo(env, fromDomain)
 }

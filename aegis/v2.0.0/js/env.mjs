@@ -1,5 +1,5 @@
 import { requireFiniteNumber, requireNonEmptyString } from './assert.mjs'
-import { envValues } from './env.values.mjs?v=9'
+import { envValues } from './env.values.mjs?v=10'
 
 function isLocalHost() {
   const host = window.location.hostname
@@ -73,7 +73,9 @@ export async function loadEnv() {
     groupMembersUrl:
       typeof merged.groupMembersUrl === 'string' ? merged.groupMembersUrl.trim() : '',
     activateUrl: typeof merged.activateUrl === 'string' ? merged.activateUrl.trim() : '',
-    getInboxUrl: requiredString(merged, 'getInboxUrl', 'AEGIS_GET_INBOX_URL'),
+    ensRpcUrl: requiredString(merged, 'ensRpcUrl', 'AEGIS_ENS_RPC_URL'),
+    publicResolver: requiredString(merged, 'publicResolver', 'AEGIS_PUBLIC_RESOLVER'),
+    ensChainId: requiredCount(merged, 'ensChainId', 'AEGIS_ENS_CHAIN_ID'),
     inboxFeedUrl: requiredString(merged, 'inboxFeedUrl', 'AEGIS_INBOX_FEED_URL'),
   })
 }

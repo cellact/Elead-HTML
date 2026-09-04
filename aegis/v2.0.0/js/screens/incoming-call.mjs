@@ -1,7 +1,7 @@
 import { failOnScreen } from '../screen-fail.mjs'
 import { requireController } from '../controller.mjs'
 import { requireElement, setText } from '../dom.mjs'
-import { displayInboxName, requireFromDomain } from '../inbox.mjs?v=10'
+import { displayInboxName, requireFromDomain } from '../inbox.mjs?v=11'
 import { readRoute } from '../route.mjs'
 
 function startIncomingCall() {

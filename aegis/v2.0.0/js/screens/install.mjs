@@ -1,6 +1,6 @@
 import { requireElement, setText } from '../dom.mjs'
 import { failOnScreen } from '../screen-fail.mjs'
-import { loadEnv } from '../env.mjs?v=6'
+import { loadEnv } from '../env.mjs?v=10'
 import { activateLine, readInstallClaim } from '../activation.mjs'
 
 function showWorking(workingNode, button) {
@@ -26,7 +26,7 @@ export async function startInstallScreen() {
 
   setText(labelNode, env.productLabel)
   setText(ensNode, `${claim.label}.${claim.domain}`)
-  setText(bodyNode, env.productDescription)
+  setText(bodyNode, env.productDescription)                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    
 
   if (env.productImage) {
     imageNode.hidden = false

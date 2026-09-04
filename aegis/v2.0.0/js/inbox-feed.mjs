@@ -1,5 +1,5 @@
 import { requireNonEmptyString } from './assert.mjs'
-import { parseInboxName } from './inbox.mjs?v=10'
+import { parseInboxName } from './inbox.mjs?v=11'
 import { isLeadStatus, leadStatus } from './lead-status.mjs'
 
 const ensLabelRe = /^(?:[a-z0-9]|[a-z0-9][a-z0-9-]{0,61}[a-z0-9])$/

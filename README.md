@@ -45,9 +45,9 @@ There is no `newchat.html` or `recentsessions.html`. The session list lives in `
 `localId` is the allotted name. `identityKind` is passed through and is not the Aegis role.
 
 - **Service provider** (`sp-aegis`): `mainscreen.html` lead list, statuses `new` / `in_progress` / `hot_lead` / `done`. Tap a lead to open chat. Chat shows the lead and **Approve**.
-- **End user** (`aegis`): `chat.html` is home. Native `MAIN` is rewritten to chat. If native history already has a session, that inbox is the `to`. If not, `GET {getInboxUrl}/{fromDomain}` returns a random claimed inbox and that becomes the `to`. The lead always sees the studio domain (e.g. `rani`), even when the real remote is `inbox1.{domain}.global`. History loads only after native has a `sessionId`. A new line is a blank thread; send still works. No **Approve**.
+- **End user** (`aegis`): `chat.html` is home. Native `MAIN` is rewritten to chat. If native history already has a session, that inbox is the `to`. If not, chat reads the ENS `inboxList` text on `{domain}.global` (same record the studio Inbox page uses) and picks an active inbox as the `to`. The lead always sees the studio domain (e.g. `rani`), even when the real remote is `inbox1.{domain}.global`. History loads only after native has a `sessionId`. A new line is a blank thread; send still works. No **Approve**.
 
-`fromDomain` is the studio 2LD. Native should open lead HTML with a full allotted name `{label}.{domain}.global`. A `#domain=` param is also accepted. Browser `preview=1` still mocks native. getInbox is called only when history is empty and the allotted name has a real domain.
+`fromDomain` is the studio 2LD. Native should open lead HTML with a full allotted name `{label}.{domain}.global`. A `#domain=` param is also accepted. Browser `preview=1` still mocks native. ENS `inboxList` is read only when history is empty and the allotted name has a real domain.
 
 Call pages are the same in both products.
 
@@ -71,7 +71,7 @@ index.html#screen=MAIN&localId={label}.{domain}.global
   → boot rewrites hash to #screen=CHAT&localId=…
   → outer iframe: app.html?screen=CHAT&…
   → inner iframe: chat.html
-  → chat uses history for to, or GET getInbox/{fromDomain} on first message
+  → chat uses history for to, or ENS inboxList on {domain}.global on first message
 ```
 
 | Hash | Product | Page |
@@ -108,7 +108,7 @@ Optional localhost override: copy `js/env.local.example.mjs` to `js/env.local.mj
 
 `js/env.mjs` throws if a required value is empty. No secrets in this repo.
 
-Lead HTML requires `getInboxUrl`. Until that backend route is deployed, use `preview=1` in a browser.
+Lead HTML reads Sepolia ENS (`ensRpcUrl` + `publicResolver`) for the first-message inbox. Lead status still uses `inboxFeedUrl`. Until those values are set, use `preview=1` in a browser.
 
 ## Preview
 
