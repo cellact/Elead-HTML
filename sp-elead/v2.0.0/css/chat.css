@@ -1,3 +1,16 @@
+html,
+body {
+  overflow: hidden;
+}
+
+.screen {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
 .chat-header {
   display: flex;
   align-items: flex-start;
@@ -5,6 +18,7 @@
   gap: var(--space-3);
   padding: var(--space-4) var(--space-5);
   border-bottom: var(--line) solid var(--color-line);
+  background: var(--color-paper);
 }
 
 .chat-title {
@@ -33,7 +47,7 @@
 }
 
 .message-list {
-  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: var(--space-4) var(--space-5);
   display: flex;
@@ -76,6 +90,7 @@
   gap: var(--space-2);
   padding: var(--space-3) var(--space-5) var(--space-5);
   border-top: var(--line) solid var(--color-line);
+  background: var(--color-paper);
 }
 
 .compose-input {
